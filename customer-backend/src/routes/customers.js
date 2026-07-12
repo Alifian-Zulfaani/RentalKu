@@ -1,0 +1,10 @@
+const express = require('express');
+const router = express.Router();
+const cc = require('../controllers/customerController');
+router.get('/', cc.getAll);
+router.get('/:id', cc.getById);
+router.post('/', cc.create);
+router.put('/:id', cc.update);
+router.delete('/:id', cc.delete);
+router.patch('/:id/blacklist', cc.toggleBlacklist);
+module.exports = router;
