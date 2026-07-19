@@ -13,8 +13,12 @@
             <p>{{ message }}</p>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-secondary" @click="cancel">{{ cancelText }}</button>
-            <button class="btn" :class="confirmClass" @click="confirm">{{ confirmText }}</button>
+            <button class="btn btn-secondary" @click="cancel">
+              {{ cancelText }}
+            </button>
+            <button class="btn" :class="confirmClass" @click="confirm">
+              {{ confirmText }}
+            </button>
           </div>
         </div>
       </div>
@@ -23,21 +27,21 @@
 </template>
 
 <script setup>
-import { X } from 'lucide-vue-next'
+import { X } from "lucide-vue-next";
 
 const props = defineProps({
   isOpen: { type: Boolean, required: true },
-  title: { type: String, default: 'Konfirmasi' },
+  title: { type: String, default: "Konfirmasi" },
   message: { type: String, required: true },
-  confirmText: { type: String, default: 'Ya, Lanjutkan' },
-  cancelText: { type: String, default: 'Batal' },
-  confirmClass: { type: String, default: 'btn-primary' }
-})
+  confirmText: { type: String, default: "Ya, Lanjutkan" },
+  cancelText: { type: String, default: "Batal" },
+  confirmClass: { type: String, default: "btn-primary" },
+});
 
-const emit = defineEmits(['confirm', 'cancel'])
+const emit = defineEmits(["confirm", "cancel"]);
 
-const confirm = () => emit('confirm')
-const cancel = () => emit('cancel')
+const confirm = () => emit("confirm");
+const cancel = () => emit("cancel");
 </script>
 
 <style scoped>

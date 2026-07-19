@@ -16,8 +16,19 @@
             <p>{{ message }}</p>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-secondary" @click="closeModal" :disabled="isLoading">Batal</button>
-            <button class="btn" :class="confirmBtnClass" @click="confirmAction" :disabled="isLoading">
+            <button
+              class="btn btn-secondary"
+              @click="closeModal"
+              :disabled="isLoading"
+            >
+              Batal
+            </button>
+            <button
+              class="btn"
+              :class="confirmBtnClass"
+              @click="confirmAction"
+              :disabled="isLoading"
+            >
               <span v-if="isLoading" class="spinner"></span>
               {{ confirmText }}
             </button>
@@ -29,27 +40,30 @@
 </template>
 
 <script setup>
-import { AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-vue-next'
+import { AlertTriangle, Info, CheckCircle, XCircle } from "lucide-vue-next";
 
 const props = defineProps({
   isOpen: Boolean,
-  title: { type: String, default: 'Konfirmasi' },
-  message: { type: String, default: 'Apakah Anda yakin ingin melanjutkan tindakan ini?' },
-  type: { type: String, default: 'warning' }, // warning, info, success, danger
-  confirmText: { type: String, default: 'Ya, Lanjutkan' },
-  confirmBtnClass: { type: String, default: 'btn-primary' },
-  isLoading: { type: Boolean, default: false }
-})
+  title: { type: String, default: "Konfirmasi" },
+  message: {
+    type: String,
+    default: "Apakah Anda yakin ingin melanjutkan tindakan ini?",
+  },
+  type: { type: String, default: "warning" }, // warning, info, success, danger
+  confirmText: { type: String, default: "Ya, Lanjutkan" },
+  confirmBtnClass: { type: String, default: "btn-primary" },
+  isLoading: { type: Boolean, default: false },
+});
 
-const emit = defineEmits(['update:isOpen', 'confirm'])
+const emit = defineEmits(["update:isOpen", "confirm"]);
 
 function closeModal() {
-  if (props.isLoading) return
-  emit('update:isOpen', false)
+  if (props.isLoading) return;
+  emit("update:isOpen", false);
 }
 
 function confirmAction() {
-  emit('confirm')
+  emit("confirm");
 }
 </script>
 
@@ -123,14 +137,16 @@ function confirmAction() {
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255,255,255,0.3);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
   border-top-color: white;
   animation: spin 1s ease-in-out infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Transitions */

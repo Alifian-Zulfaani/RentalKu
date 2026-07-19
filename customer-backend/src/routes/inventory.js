@@ -1,10 +1,10 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const ic = require('../controllers/inventoryController');
-router.get('/categories', ic.getCategories);
-router.get('/', ic.getAll);
-router.get('/:id', ic.getById);
-router.post('/', ic.create);
-router.put('/:id', ic.update);
-router.delete('/:id', ic.delete);
+const ic = require("../controllers/inventoryController");
+router.get("/categories", ic.getCategories);
+router.get("/", ic.getAll);
+router.get("/:id", ic.getById);
+router.post("/", ic.create);
+router.put("/:id", ic.update);
+router.delete("/:id", ic.delete);
 module.exports = router;

@@ -3,19 +3,36 @@
     <div class="container navbar-inner">
       <router-link to="/" class="navbar-brand">
         <div class="brand-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="url(#brandGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="url(#brandGrad)"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <defs>
-              <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#7c3aed"/>
-                <stop offset="100%" stop-color="#3b82f6"/>
+              <linearGradient
+                id="brandGrad"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="100%"
+              >
+                <stop offset="0%" stop-color="#7c3aed" />
+                <stop offset="100%" stop-color="#3b82f6" />
               </linearGradient>
             </defs>
-            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-            <line x1="8" y1="21" x2="16" y2="21"/>
-            <line x1="12" y1="17" x2="12" y2="21"/>
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+            <line x1="8" y1="21" x2="16" y2="21" />
+            <line x1="12" y1="17" x2="12" y2="21" />
           </svg>
         </div>
-        <span class="brand-text">Rental<span class="text-gradient">Ku</span></span>
+        <span class="brand-text"
+          >Rental<span class="text-gradient">Ku</span></span
+        >
       </router-link>
 
       <div class="navbar-links" :class="{ active: menuOpen }">
@@ -26,15 +43,27 @@
       </div>
 
       <div class="navbar-actions">
-        <button class="theme-toggle" @click="themeStore.toggleTheme" aria-label="Toggle theme">
+        <button
+          class="theme-toggle"
+          @click="themeStore.toggleTheme"
+          aria-label="Toggle theme"
+        >
           <Sun v-if="themeStore.isDark" :size="20" />
           <Moon v-else :size="20" />
         </button>
-        <router-link to="/admin/login" class="btn btn-secondary btn-sm">Masuk</router-link>
-        <router-link to="/order" class="btn btn-primary btn-sm">Mulai Sekarang</router-link>
+        <router-link to="/admin/login" class="btn btn-secondary btn-sm"
+          >Masuk</router-link
+        >
+        <router-link to="/order" class="btn btn-primary btn-sm"
+          >Mulai Sekarang</router-link
+        >
       </div>
 
-      <button class="hamburger" @click="menuOpen = !menuOpen" aria-label="Toggle menu">
+      <button
+        class="hamburger"
+        @click="menuOpen = !menuOpen"
+        aria-label="Toggle menu"
+      >
         <span></span><span></span><span></span>
       </button>
     </div>
@@ -47,13 +76,26 @@
         <a href="#testimoni" @click="closeMenu">Testimoni</a>
         <a href="#faq" @click="closeMenu">FAQ</a>
         <div class="mobile-menu-actions">
-          <button class="btn btn-secondary btn-block theme-toggle-mobile" @click="themeStore.toggleTheme">
+          <button
+            class="btn btn-secondary btn-block theme-toggle-mobile"
+            @click="themeStore.toggleTheme"
+          >
             <Sun v-if="themeStore.isDark" :size="18" />
             <Moon v-else :size="18" />
-            <span>{{ themeStore.isDark ? 'Light Mode' : 'Dark Mode' }}</span>
+            <span>{{ themeStore.isDark ? "Light Mode" : "Dark Mode" }}</span>
           </button>
-          <router-link to="/admin/login" class="btn btn-secondary btn-block" @click="closeMenu">Masuk</router-link>
-          <router-link to="/order" class="btn btn-primary btn-block" @click="closeMenu">Mulai Sekarang</router-link>
+          <router-link
+            to="/admin/login"
+            class="btn btn-secondary btn-block"
+            @click="closeMenu"
+            >Masuk</router-link
+          >
+          <router-link
+            to="/order"
+            class="btn btn-primary btn-block"
+            @click="closeMenu"
+            >Mulai Sekarang</router-link
+          >
         </div>
       </div>
     </div>
@@ -61,24 +103,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { Sun, Moon } from 'lucide-vue-next'
-import { useThemeStore } from '../../stores/theme'
+import { ref, onMounted, onUnmounted } from "vue";
+import { Sun, Moon } from "lucide-vue-next";
+import { useThemeStore } from "../../stores/theme";
 
-const themeStore = useThemeStore()
-const isScrolled = ref(false)
-const menuOpen = ref(false)
+const themeStore = useThemeStore();
+const isScrolled = ref(false);
+const menuOpen = ref(false);
 
 function handleScroll() {
-  isScrolled.value = window.scrollY > 20
+  isScrolled.value = window.scrollY > 20;
 }
 
 function closeMenu() {
-  menuOpen.value = false
+  menuOpen.value = false;
 }
 
-onMounted(() => window.addEventListener('scroll', handleScroll))
-onUnmounted(() => window.removeEventListener('scroll', handleScroll))
+onMounted(() => window.addEventListener("scroll", handleScroll));
+onUnmounted(() => window.removeEventListener("scroll", handleScroll));
 </script>
 
 <style scoped>
@@ -138,7 +180,7 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 }
 
 .navbar-links a::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -4px;
   left: 0;
@@ -251,7 +293,8 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 }
 
 @media (max-width: 768px) {
-  .navbar-links, .navbar-actions {
+  .navbar-links,
+  .navbar-actions {
     display: none;
   }
   .hamburger {

@@ -16,29 +16,48 @@
         </div>
 
         <h1 class="hero-title animate-fadeInUp" style="animation-delay: 0.1s">
-          Kelola Bisnis Rental<br>
+          Kelola Bisnis Rental<br />
           <span class="text-gradient">Lebih Mudah & Efisien</span>
         </h1>
 
         <p class="hero-desc animate-fadeInUp" style="animation-delay: 0.2s">
-          Platform all-in-one untuk mengelola order sewa, inventaris, pelanggan, dan keuangan bisnis rental Anda. 
-          Buat halaman booking online kustom dalam hitungan menit.
+          Platform all-in-one untuk mengelola order sewa, inventaris, pelanggan,
+          dan keuangan bisnis rental Anda. Buat halaman booking online kustom
+          dalam hitungan menit.
         </p>
 
-        <div class="hero-actions animate-fadeInUp" style="animation-delay: 0.3s">
+        <div
+          class="hero-actions animate-fadeInUp"
+          style="animation-delay: 0.3s"
+        >
           <router-link to="/order" class="btn btn-primary btn-lg">
             Mulai Sekarang
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M5 12h14" />
+              <path d="m12 5 7 7-7 7" />
+            </svg>
           </router-link>
-          <a href="#fitur" class="btn btn-secondary btn-lg">
-            Lihat Fitur
-          </a>
+          <a href="#fitur" class="btn btn-secondary btn-lg"> Lihat Fitur </a>
         </div>
 
         <div class="hero-trust animate-fadeInUp" style="animation-delay: 0.4s">
           <div class="trust-avatars">
-            <div class="trust-avatar" v-for="i in 4" :key="i" :style="{ background: avatarColors[i-1] }">
-              {{ avatarInitials[i-1] }}
+            <div
+              class="trust-avatar"
+              v-for="i in 4"
+              :key="i"
+              :style="{ background: avatarColors[i - 1] }"
+            >
+              {{ avatarInitials[i - 1] }}
             </div>
           </div>
           <div class="trust-text">
@@ -57,14 +76,25 @@
           </div>
           <div class="mockup-body">
             <div class="mockup-stats">
-              <div class="mockup-stat" v-for="(stat, idx) in mockStats" :key="idx">
-                <div class="mockup-stat-value" :style="{ color: stat.color }">{{ stat.value }}</div>
+              <div
+                class="mockup-stat"
+                v-for="(stat, idx) in mockStats"
+                :key="idx"
+              >
+                <div class="mockup-stat-value" :style="{ color: stat.color }">
+                  {{ stat.value }}
+                </div>
                 <div class="mockup-stat-label">{{ stat.label }}</div>
               </div>
             </div>
             <div class="mockup-chart">
               <div class="chart-bars">
-                <div class="chart-bar" v-for="(h, i) in chartData" :key="i" :style="{ height: h + '%' }"></div>
+                <div
+                  class="chart-bar"
+                  v-for="(h, i) in chartData"
+                  :key="i"
+                  :style="{ height: h + '%' }"
+                ></div>
               </div>
             </div>
             <div class="mockup-table">
@@ -82,15 +112,15 @@
 </template>
 
 <script setup>
-const avatarColors = ['#7c3aed', '#3b82f6', '#10b981', '#f59e0b']
-const avatarInitials = ['B', 'S', 'A', 'D']
+const avatarColors = ["#7c3aed", "#3b82f6", "#10b981", "#f59e0b"];
+const avatarInitials = ["B", "S", "A", "D"];
 const mockStats = [
-  { value: '128', label: 'Order Aktif', color: '#7c3aed' },
-  { value: '456', label: 'Total Barang', color: '#3b82f6' },
-  { value: 'Rp12.5M', label: 'Pendapatan', color: '#10b981' },
-  { value: '89', label: 'Pelanggan', color: '#f59e0b' }
-]
-const chartData = [45, 65, 55, 80, 70, 90, 60, 75, 85, 50, 70, 95]
+  { value: "128", label: "Order Aktif", color: "#7c3aed" },
+  { value: "456", label: "Total Barang", color: "#3b82f6" },
+  { value: "Rp12.5M", label: "Pendapatan", color: "#10b981" },
+  { value: "89", label: "Pelanggan", color: "#f59e0b" },
+];
+const chartData = [45, 65, 55, 80, 70, 90, 60, 75, 85, 50, 70, 95];
 </script>
 
 <style scoped>
@@ -272,9 +302,15 @@ const chartData = [45, 65, 55, 80, 70, 90, 60, 75, 85, 50, 70, 95]
   border-radius: 50%;
 }
 
-.mockup-dots span:nth-child(1) { background: #ef4444; }
-.mockup-dots span:nth-child(2) { background: #f59e0b; }
-.mockup-dots span:nth-child(3) { background: #10b981; }
+.mockup-dots span:nth-child(1) {
+  background: #ef4444;
+}
+.mockup-dots span:nth-child(2) {
+  background: #f59e0b;
+}
+.mockup-dots span:nth-child(3) {
+  background: #10b981;
+}
 
 .mockup-title {
   font-size: 0.8rem;
@@ -361,9 +397,16 @@ const chartData = [45, 65, 55, 80, 70, 90, 60, 75, 85, 50, 70, 95]
   background: rgba(148, 163, 184, 0.12);
 }
 
-.table-cell.name { flex: 3; }
-.table-cell.status { flex: 1; background: rgba(16, 185, 129, 0.2); }
-.table-cell.amount { flex: 2; }
+.table-cell.name {
+  flex: 3;
+}
+.table-cell.status {
+  flex: 1;
+  background: rgba(16, 185, 129, 0.2);
+}
+.table-cell.amount {
+  flex: 2;
+}
 
 @media (max-width: 768px) {
   .hero {

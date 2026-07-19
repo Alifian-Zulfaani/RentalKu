@@ -1,7 +1,7 @@
 <template>
-  <button 
-    class="scroll-to-top" 
-    :class="{ visible: isVisible }" 
+  <button
+    class="scroll-to-top"
+    :class="{ visible: isVisible }"
     @click="scrollToTop"
     aria-label="Scroll to top"
   >
@@ -10,24 +10,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { ArrowUp } from 'lucide-vue-next'
+import { ref, onMounted, onUnmounted } from "vue";
+import { ArrowUp } from "lucide-vue-next";
 
-const isVisible = ref(false)
+const isVisible = ref(false);
 
 const handleScroll = () => {
-  isVisible.value = window.scrollY > 300
-}
+  isVisible.value = window.scrollY > 300;
+};
 
 const scrollToTop = () => {
   window.scrollTo({
     top: 0,
-    behavior: 'smooth'
-  })
-}
+    behavior: "smooth",
+  });
+};
 
-onMounted(() => window.addEventListener('scroll', handleScroll))
-onUnmounted(() => window.removeEventListener('scroll', handleScroll))
+onMounted(() => window.addEventListener("scroll", handleScroll));
+onUnmounted(() => window.removeEventListener("scroll", handleScroll));
 </script>
 
 <style scoped>
