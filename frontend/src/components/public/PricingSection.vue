@@ -2,20 +2,17 @@
   <section id="harga" class="section pricing-section">
     <div class="container">
       <h2 class="section-title">
-        Harga Spesial <span class="text-gradient">Lifetime Deal</span>
+        Mulai dengan <span class="text-gradient">Early Access</span>
       </h2>
-      <p class="section-subtitle">
-        Bayar sekali, pakai selamanya. Tanpa biaya bulanan.
-      </p>
+      <p class="section-subtitle">Gratis selama masa pengenalan RentalKu.</p>
       <div class="pricing-wrapper">
         <div class="pricing-card glass-card">
-          <div class="pricing-badge">🔥 BEST VALUE</div>
+          <div class="pricing-badge">EARLY ACCESS</div>
           <div class="pricing-header">
-            <h3>Lifetime Access</h3>
+            <h3>Akses RentalKu</h3>
             <div class="pricing-price">
-              <span class="price-old">Rp499.000</span>
-              <span class="price-current">Rp249.000</span>
-              <span class="price-label">bayar sekali</span>
+              <span class="price-current">Rp0</span>
+              <span class="price-label">gratis untuk sekarang</span>
             </div>
           </div>
           <ul class="pricing-features">
@@ -33,10 +30,10 @@
             </li>
           </ul>
           <router-link to="/order" class="btn btn-primary btn-lg btn-block"
-            >Daftar Sekarang</router-link
+            >Daftar gratis</router-link
           >
           <p class="pricing-note">
-            ✨ Termasuk semua update fitur di masa depan
+            Termasuk pembaruan fitur selama masa early access
           </p>
         </div>
       </div>
@@ -100,13 +97,6 @@ const pricingFeatures = [
 .pricing-header h3 {
   font-size: 1.5rem;
   margin-bottom: 16px;
-}
-.price-old {
-  text-decoration: line-through;
-  color: var(--text-muted);
-  font-size: 1.1rem;
-  display: block;
-  margin-bottom: 4px;
 }
 .price-current {
   font-size: 3.5rem;

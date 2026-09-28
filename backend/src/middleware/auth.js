@@ -1,8 +1,17 @@
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = process.env.JWT_SECRET || "rentalku-secret-key-2024";
+const JWT_SECRET =
+  process.env.JWT_SECRET ||
+  (process.env.NODE_ENV === "production"
+    ? null
+    : "rentalku-development-secret");
 
 function authMiddleware(req, res, next) {
+  if (!JWT_SECRET) {
+    return res
+      .status(500)
+      .json({ message: "Konfigurasi autentikasi belum lengkap" });
+  }
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {

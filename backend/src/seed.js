@@ -96,15 +96,13 @@ if (existingSubs === 0) {
       status: "rejected",
     },
   ];
-  const hashedPwd = bcrypt.hashSync("password123", 10);
   for (const s of subs) {
     db.prepare(
-      `INSERT INTO subscribers (name, email, whatsapp, password, business_name, business_type, subdomain, plan, payment_method, amount, status, confirmed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO subscribers (name, email, whatsapp, business_name, business_type, subdomain, plan, payment_method, amount, status, confirmed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       s.name,
       s.email,
       s.whatsapp,
-      hashedPwd,
       s.business_name,
       s.business_type,
       s.subdomain,

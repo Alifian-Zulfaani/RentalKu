@@ -2,16 +2,11 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("../config/database");
 const { JWT_SECRET } = require("../middleware/auth");
+const { logServerError } = require("../utils/http");
 
 exports.login = (req, res) => {
   try {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email dan password wajib diisi" });
-    }
 
     const admin = db.prepare("SELECT * FROM admins WHERE email = ?").get(email);
 
@@ -36,7 +31,8 @@ exports.login = (req, res) => {
       admin: { id: admin.id, name: admin.name, email: admin.email },
     });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    logServerError("auth.login", err);
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
 
@@ -49,6 +45,7 @@ exports.me = (req, res) => {
       return res.status(404).json({ message: "Admin tidak ditemukan" });
     res.json(admin);
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    logServerError("auth.me", err);
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };

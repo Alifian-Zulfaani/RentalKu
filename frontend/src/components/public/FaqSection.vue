@@ -47,9 +47,9 @@ const toggle = (i) => {
 
 const faqs = [
   {
-    question: "Apakah benar bayar sekali saja?",
+    question: "Apakah RentalKu gratis?",
     answer:
-      "Ya! Dengan paket Lifetime Deal, kamu cukup bayar Rp249.000 satu kali saja dan bisa menggunakan RentalKu selamanya. Tidak ada biaya bulanan atau tahunan.",
+      "Ya. RentalKu dapat digunakan gratis selama masa early access. Kami akan mengabarkan setiap perubahan ketentuan melalui kanal resmi RentalKu.",
   },
   {
     question: "Bisnis rental apa saja yang bisa pakai RentalKu?",
@@ -69,7 +69,7 @@ const faqs = [
   {
     question: "Bagaimana cara mendaftar?",
     answer:
-      'Klik tombol "Mulai Sekarang", isi data diri, pilih metode pembayaran, dan lakukan pembayaran. Akun kamu akan langsung aktif setelah pembayaran dikonfirmasi.',
+      'Klik tombol "Mulai Sekarang", isi data bisnis dan kontak kamu, lalu kirim pendaftaran. Setelah itu, konfirmasikan pendaftaran lewat WhatsApp agar tim kami dapat meninjau aksesmu.',
   },
   {
     question: "Ada dukungan teknis?",

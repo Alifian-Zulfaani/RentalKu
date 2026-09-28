@@ -3,7 +3,8 @@
     class="scroll-to-top"
     :class="{ visible: isVisible }"
     @click="scrollToTop"
-    aria-label="Scroll to top"
+    aria-label="Kembali ke bagian atas halaman"
+    title="Kembali ke atas"
   >
     <ArrowUp :size="24" />
   </button>
@@ -33,10 +34,10 @@ onUnmounted(() => window.removeEventListener("scroll", handleScroll));
 <style scoped>
 .scroll-to-top {
   position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 50px;
-  height: 50px;
+  bottom: 86px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
   background: var(--accent-gradient);
   color: white;
   border: none;
@@ -67,10 +68,10 @@ onUnmounted(() => window.removeEventListener("scroll", handleScroll));
 
 @media (max-width: 768px) {
   .scroll-to-top {
-    bottom: 20px;
-    right: 20px;
-    width: 45px;
-    height: 45px;
+    bottom: 16px;
+    right: 16px;
+    width: 46px;
+    height: 46px;
   }
 }
 </style>

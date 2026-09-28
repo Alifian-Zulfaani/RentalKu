@@ -1,8 +1,11 @@
 const db = require("../config/database");
+const { logServerError } = require("../utils/http");
 
 exports.getAll = (req, res) => {
   try {
-    const { search, status, page = 1, limit = 10 } = req.query;
+    const { search, status } = req.query;
+    const page = Number(req.query.page || 1);
+    const limit = Number(req.query.limit || 10);
     let query = `SELECT id, name, email, whatsapp, business_name, business_type, subdomain, plan, payment_method, amount, status, confirmed_at, notes, created_at FROM subscribers WHERE 1=1`;
     const params = [];
 
@@ -37,7 +40,8 @@ exports.getAll = (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    logServerError("subscribers.getAll", err);
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
 
@@ -52,16 +56,14 @@ exports.getById = (req, res) => {
       return res.status(404).json({ message: "Subscriber tidak ditemukan" });
     res.json(sub);
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    logServerError("subscribers.getById", err);
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
 
 exports.updateStatus = (req, res) => {
   try {
     const { status, notes } = req.body;
-    if (!["pending", "confirmed", "rejected"].includes(status)) {
-      return res.status(400).json({ message: "Status tidak valid" });
-    }
     const sub = db
       .prepare("SELECT * FROM subscribers WHERE id = ?")
       .get(req.params.id);
@@ -69,7 +71,9 @@ exports.updateStatus = (req, res) => {
       return res.status(404).json({ message: "Subscriber tidak ditemukan" });
 
     const confirmedAt =
-      status === "confirmed" ? new Date().toISOString() : sub.confirmed_at;
+      status === "confirmed"
+        ? sub.confirmed_at || new Date().toISOString()
+        : null;
     db.prepare(
       "UPDATE subscribers SET status = ?, confirmed_at = ?, notes = ? WHERE id = ?",
     ).run(
@@ -81,7 +85,8 @@ exports.updateStatus = (req, res) => {
 
     res.json({ message: `Subscriber berhasil di-${status}` });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    logServerError("subscribers.updateStatus", err);
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
 
@@ -95,7 +100,8 @@ exports.delete = (req, res) => {
     db.prepare("DELETE FROM subscribers WHERE id = ?").run(req.params.id);
     res.json({ message: "Subscriber berhasil dihapus" });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    logServerError("subscribers.delete", err);
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
 
@@ -143,6 +149,7 @@ exports.getStats = (req, res) => {
       recentSubscribers,
     });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    logServerError("subscribers.getStats", err);
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };

@@ -1,109 +1,34 @@
 <template>
   <section class="hero">
-    <!-- Background effects -->
-    <div class="hero-bg">
-      <div class="hero-orb hero-orb-1"></div>
-      <div class="hero-orb hero-orb-2"></div>
-      <div class="hero-orb hero-orb-3"></div>
-      <div class="hero-grid"></div>
-    </div>
-
-    <div class="container hero-content">
-      <div class="hero-text">
-        <div class="hero-badge animate-fadeInUp">
-          <span class="badge-dot"></span>
-          Platform #1 Manajemen Rental Indonesia
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow"><span></span> Sistem operasional untuk rental</p>
+        <h1>RentalKu</h1>
+        <p class="hero-lead">Satu ruang kerja untuk menjaga order, inventaris, dan pelanggan tetap bergerak.</p>
+        <p class="hero-description">Bawa proses rental yang tersebar di chat dan spreadsheet ke alur yang jelas, rapi, dan siap tumbuh bersama bisnis Anda.</p>
+        <div class="hero-actions">
+          <router-link to="/order" class="btn btn-primary btn-lg">Mulai kelola rental <ArrowRight :size="18" /></router-link>
+          <a href="#fitur" class="text-action">Lihat kemampuan <ArrowDown :size="16" /></a>
         </div>
-
-        <h1 class="hero-title animate-fadeInUp" style="animation-delay: 0.1s">
-          Kelola Bisnis Rental<br />
-          <span class="text-gradient">Lebih Mudah & Efisien</span>
-        </h1>
-
-        <p class="hero-desc animate-fadeInUp" style="animation-delay: 0.2s">
-          Platform all-in-one untuk mengelola order sewa, inventaris, pelanggan,
-          dan keuangan bisnis rental Anda. Buat halaman booking online kustom
-          dalam hitungan menit.
-        </p>
-
-        <div
-          class="hero-actions animate-fadeInUp"
-          style="animation-delay: 0.3s"
-        >
-          <router-link to="/order" class="btn btn-primary btn-lg">
-            Mulai Sekarang
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M5 12h14" />
-              <path d="m12 5 7 7-7 7" />
-            </svg>
-          </router-link>
-          <a href="#fitur" class="btn btn-secondary btn-lg"> Lihat Fitur </a>
-        </div>
-
-        <div class="hero-trust animate-fadeInUp" style="animation-delay: 0.4s">
-          <div class="trust-avatars">
-            <div
-              class="trust-avatar"
-              v-for="i in 4"
-              :key="i"
-              :style="{ background: avatarColors[i - 1] }"
-            >
-              {{ avatarInitials[i - 1] }}
-            </div>
-          </div>
-          <div class="trust-text">
-            <strong>500+</strong> pengusaha rental sudah bergabung
-          </div>
+        <div class="hero-notes">
+          <span><Check :size="16" /> Akses seumur hidup</span>
+          <span><Check :size="16" /> Tanpa biaya bulanan</span>
+          <span><Check :size="16" /> Setup singkat</span>
         </div>
       </div>
 
-      <div class="hero-visual animate-fadeInUp" style="animation-delay: 0.3s">
-        <div class="dashboard-mockup">
-          <div class="mockup-header">
-            <div class="mockup-dots">
-              <span></span><span></span><span></span>
+      <div class="product-shot" aria-label="Contoh dashboard rental">
+        <div class="shot-bar"><span class="shot-brand"><Boxes :size="16" /> Summit Gear</span><span class="shot-user">AK</span></div>
+        <div class="shot-content">
+          <aside><span class="active">Ringkasan</span><span>Order</span><span>Inventaris</span><span>Pelanggan</span></aside>
+          <div class="shot-main">
+            <div class="shot-heading"><div><small>Selamat pagi, Anisa</small><strong>Operasional hari ini</strong></div><button>+ Order baru</button></div>
+            <div class="metric-grid">
+              <div><small>Order aktif</small><strong>18</strong><em>+4 minggu ini</em></div>
+              <div><small>Barang tersedia</small><strong>126</strong><em>92% siap sewa</em></div>
+              <div><small>Pendapatan</small><strong>Rp8,4jt</strong><em>bulan berjalan</em></div>
             </div>
-            <div class="mockup-title">Dashboard RentalKu</div>
-          </div>
-          <div class="mockup-body">
-            <div class="mockup-stats">
-              <div
-                class="mockup-stat"
-                v-for="(stat, idx) in mockStats"
-                :key="idx"
-              >
-                <div class="mockup-stat-value" :style="{ color: stat.color }">
-                  {{ stat.value }}
-                </div>
-                <div class="mockup-stat-label">{{ stat.label }}</div>
-              </div>
-            </div>
-            <div class="mockup-chart">
-              <div class="chart-bars">
-                <div
-                  class="chart-bar"
-                  v-for="(h, i) in chartData"
-                  :key="i"
-                  :style="{ height: h + '%' }"
-                ></div>
-              </div>
-            </div>
-            <div class="mockup-table">
-              <div class="table-row" v-for="i in 3" :key="i">
-                <div class="table-cell name"></div>
-                <div class="table-cell status"></div>
-                <div class="table-cell amount"></div>
-              </div>
-            </div>
+            <div class="orders"><div class="orders-title"><strong>Pengambilan hari ini</strong><span>5 order</span></div><div v-for="order in orders" :key="order.name" class="order-row"><span class="order-avatar">{{ order.initial }}</span><span><strong>{{ order.name }}</strong><small>{{ order.item }}</small></span><b>{{ order.time }}</b></div></div>
           </div>
         </div>
       </div>
@@ -112,331 +37,33 @@
 </template>
 
 <script setup>
-const avatarColors = ["#7c3aed", "#3b82f6", "#10b981", "#f59e0b"];
-const avatarInitials = ["B", "S", "A", "D"];
-const mockStats = [
-  { value: "128", label: "Order Aktif", color: "#7c3aed" },
-  { value: "456", label: "Total Barang", color: "#3b82f6" },
-  { value: "Rp12.5M", label: "Pendapatan", color: "#10b981" },
-  { value: "89", label: "Pelanggan", color: "#f59e0b" },
+import { ArrowDown, ArrowRight, Boxes, Check } from "lucide-vue-next";
+
+const orders = [
+  { initial: "R", name: "Rafi Pratama", item: "Paket Camping 4 Orang", time: "09.00" },
+  { initial: "D", name: "Dina Kurnia", item: "Tenda Family Pro", time: "11.30" },
+  { initial: "A", name: "Arga Putra", item: "Carrier & Cooking Set", time: "15.00" },
 ];
-const chartData = [45, 65, 55, 80, 70, 90, 60, 75, 85, 50, 70, 95];
 </script>
 
 <style scoped>
-.hero {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  position: relative;
-  overflow: hidden;
-  padding-top: 80px;
-}
-
-.hero-bg {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.hero-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.4;
-}
-
-.hero-orb-1 {
-  width: 500px;
-  height: 500px;
-  background: #7c3aed;
-  top: -100px;
-  right: -100px;
-  opacity: 0.15;
-}
-
-.hero-orb-2 {
-  width: 400px;
-  height: 400px;
-  background: #3b82f6;
-  bottom: -50px;
-  left: -100px;
-  opacity: 0.12;
-}
-
-.hero-orb-3 {
-  width: 300px;
-  height: 300px;
-  background: #06b6d4;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  opacity: 0.08;
-}
-
-.hero-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(148, 163, 184, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
-}
-
-.hero-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
-  align-items: center;
-  position: relative;
-  z-index: 2;
-}
-
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 20px;
-  background: var(--accent-soft);
-  border: 1px solid var(--border-accent);
-  border-radius: var(--radius-full);
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-accent);
-  margin-bottom: 24px;
-}
-
-.badge-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--accent-primary);
-  border-radius: 50%;
-  animation: pulse-glow 2s infinite;
-}
-
-.hero-title {
-  font-size: 3.5rem;
-  font-weight: 800;
-  line-height: 1.1;
-  margin-bottom: 24px;
-}
-
-.hero-desc {
-  font-size: 1.15rem;
-  color: var(--text-secondary);
-  line-height: 1.8;
-  margin-bottom: 36px;
-  max-width: 520px;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 48px;
-}
-
-.hero-trust {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.trust-avatars {
-  display: flex;
-}
-
-.trust-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: white;
-  border: 2px solid var(--bg-primary);
-  margin-left: -8px;
-}
-
-.trust-avatar:first-child {
-  margin-left: 0;
-}
-
-.trust-text {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-}
-
-.trust-text strong {
-  color: var(--text-primary);
-}
-
-/* Dashboard Mockup */
-.dashboard-mockup {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-lg);
-  animation: float 6s ease-in-out infinite;
-}
-
-.mockup-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.mockup-dots {
-  display: flex;
-  gap: 6px;
-}
-
-.mockup-dots span {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.mockup-dots span:nth-child(1) {
-  background: #ef4444;
-}
-.mockup-dots span:nth-child(2) {
-  background: #f59e0b;
-}
-.mockup-dots span:nth-child(3) {
-  background: #10b981;
-}
-
-.mockup-title {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.mockup-body {
-  padding: 20px;
-}
-
-.mockup-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.mockup-stat {
-  background: var(--bg-glass);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 12px;
-  text-align: center;
-}
-
-.mockup-stat-value {
-  font-size: 1.1rem;
-  font-weight: 800;
-}
-
-.mockup-stat-label {
-  font-size: 0.65rem;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.mockup-chart {
-  background: var(--bg-glass);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.chart-bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-  height: 80px;
-}
-
-.chart-bar {
-  flex: 1;
-  background: var(--accent-gradient);
-  border-radius: 3px 3px 0 0;
-  min-height: 8px;
-  opacity: 0.7;
-  transition: opacity 0.3s;
-}
-
-.chart-bar:hover {
-  opacity: 1;
-}
-
-.mockup-table {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.table-row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 8px 12px;
-  background: var(--bg-glass);
-  border-radius: var(--radius-sm);
-}
-
-.table-cell {
-  height: 10px;
-  border-radius: 5px;
-  background: rgba(148, 163, 184, 0.12);
-}
-
-.table-cell.name {
-  flex: 3;
-}
-.table-cell.status {
-  flex: 1;
-  background: rgba(16, 185, 129, 0.2);
-}
-.table-cell.amount {
-  flex: 2;
-}
-
-@media (max-width: 768px) {
-  .hero {
-    min-height: auto;
-    padding: 120px 0 60px;
-  }
-  .hero-content {
-    grid-template-columns: 1fr;
-    gap: 40px;
-    text-align: center;
-  }
-  .hero-title {
-    font-size: 2.2rem;
-  }
-  .hero-desc {
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .hero-actions {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .hero-trust {
-    justify-content: center;
-  }
-  .mockup-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .dashboard-mockup {
-    animation: none;
-  }
-}
+.hero { padding: 74px 0 56px; border-bottom: 1px solid var(--border-color); background: var(--bg-primary); }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 0.88fr) minmax(500px, 1.12fr); align-items: center; gap: 58px; }
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 18px; color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.eyebrow span { width: 7px; height: 7px; border-radius: 50%; background: var(--coral); }
+.hero h1 { margin-bottom: 16px; font-size: clamp(3rem, 6vw, 5.35rem); letter-spacing: 0; }
+.hero-lead { max-width: 580px; margin-bottom: 14px; font-family: var(--font-display); font-size: clamp(1.35rem, 2vw, 1.8rem); font-weight: 700; line-height: 1.32; }
+.hero-description { max-width: 540px; color: var(--text-secondary); font-size: 1rem; }
+.hero-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 20px; margin-top: 29px; }
+.text-action { display: inline-flex; align-items: center; gap: 7px; color: var(--text-primary); font-weight: 700; font-size: 0.9rem; }
+.text-action:hover { color: var(--accent-primary); }
+.hero-notes { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 30px; color: var(--text-secondary); font-size: 0.8rem; }
+.hero-notes span { display: inline-flex; align-items: center; gap: 5px; }.hero-notes svg { color: var(--accent-primary); }
+.product-shot { overflow: hidden; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface-raised); box-shadow: 12px 16px 0 var(--accent-soft), var(--shadow-lg); }
+.shot-bar { display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 16px; border-bottom: 1px solid var(--border-color); font-size: 0.78rem; }.shot-brand { display: inline-flex; align-items: center; gap: 7px; font-weight: 800; }.shot-brand svg { color: var(--accent-primary); }.shot-user { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 50%; background: #f2ddc6; color: #754b24; font-weight: 800; font-size: 0.67rem; }
+.shot-content { display: grid; grid-template-columns: 116px 1fr; min-height: 347px; }.shot-content aside { display: flex; flex-direction: column; gap: 5px; padding: 16px 9px; border-right: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.68rem; font-weight: 700; }.shot-content aside span { padding: 7px 8px; border-radius: 4px; }.shot-content aside .active { background: var(--accent-soft); color: var(--accent-primary); }
+.shot-main { padding: 20px; }.shot-heading { display: flex; justify-content: space-between; gap: 12px; }.shot-heading small, .metric-grid small, .order-row small { display: block; color: var(--text-muted); font-size: 0.67rem; }.shot-heading strong { display: block; margin-top: 3px; font-family: var(--font-display); font-size: 1rem; }.shot-heading button { align-self: flex-start; padding: 6px 8px; border-radius: 4px; background: var(--accent-primary); color: var(--accent-contrast); font-size: 0.65rem; font-weight: 700; }
+.metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin: 18px 0; }.metric-grid > div { padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; }.metric-grid strong { display: block; margin: 3px 0; font-family: var(--font-display); font-size: 1.03rem; }.metric-grid em { color: var(--success); font-size: 0.61rem; font-style: normal; }.orders { border-top: 1px solid var(--border-color); }.orders-title { display: flex; justify-content: space-between; padding: 12px 0 7px; font-size: 0.7rem; }.orders-title span { color: var(--text-muted); }.order-row { display: grid; grid-template-columns: 25px 1fr auto; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--border-color); }.order-avatar { display: grid; width: 25px; height: 25px; place-items: center; border-radius: 50%; background: var(--surface-subtle); color: var(--accent-primary); font-size: 0.66rem; font-weight: 800; }.order-row strong { display: block; font-size: 0.68rem; }.order-row b { color: var(--text-secondary); font-size: 0.63rem; }
+@media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; }.hero-copy { max-width: 650px; }.product-shot { width: min(620px, calc(100% - 14px)); justify-self: center; } }
+@media (max-width: 520px) { .hero { padding-top: 50px; }.hero-notes { display: grid; grid-template-columns: 1fr 1fr; }.shot-content { grid-template-columns: 82px 1fr; }.shot-content aside { font-size: 0.6rem; }.shot-main { padding: 13px; }.metric-grid { gap: 5px; }.metric-grid > div { padding: 7px; }.metric-grid strong { font-size: 0.82rem; }.metric-grid em { display: none; }.order-row small { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } }
 </style>

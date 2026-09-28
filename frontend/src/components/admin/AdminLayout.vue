@@ -1,65 +1,76 @@
 <template>
-  <div class="admin-layout">
+  <div class="admin-shell">
     <aside
       class="sidebar"
-      :class="{ collapsed: sidebarCollapsed, 'mobile-open': mobileOpen }"
+      :class="{ open: mobileOpen, collapsed: sidebarCollapsed }"
     >
-      <div class="sidebar-header">
-        <router-link to="/admin/dashboard" class="sidebar-brand">
-          <span class="brand-full" v-if="!sidebarCollapsed"
-            >Rental<span class="text-gradient">Ku</span></span
-          >
-          <span class="brand-short text-gradient" v-else>RK</span>
-        </router-link>
-        <div class="sidebar-badge" v-if="!sidebarCollapsed">Company</div>
-      </div>
-      <nav class="sidebar-nav">
+      <router-link to="/admin/dashboard" class="sidebar-brand"
+        ><span><Boxes :size="19" /></span
+        ><strong v-if="!sidebarCollapsed">RentalKu</strong></router-link
+      >
+      <p v-if="!sidebarCollapsed" class="workspace-label">Platform workspace</p>
+      <nav class="sidebar-nav" aria-label="Navigasi admin">
         <router-link
           v-for="item in navItems"
           :key="item.path"
           :to="item.path"
           class="nav-item"
-          :class="{ active: $route.path === item.path }"
           @click="mobileOpen = false"
         >
-          <component :is="item.icon" :size="20" />
-          <span v-if="!sidebarCollapsed">{{ item.label }}</span>
+          <component :is="item.icon" :size="19" /><span
+            v-if="!sidebarCollapsed"
+            >{{ item.label }}</span
+          >
         </router-link>
       </nav>
-      <div class="sidebar-footer">
-        <button class="nav-item logout-btn" @click="handleLogout">
-          <LogOut :size="20" />
-          <span v-if="!sidebarCollapsed">Keluar</span>
-        </button>
-      </div>
+      <button
+        class="nav-item logout"
+        type="button"
+        @click="showLogoutModal = true"
+      >
+        <LogOut :size="19" /><span v-if="!sidebarCollapsed">Keluar</span>
+      </button>
     </aside>
     <div
-      class="sidebar-overlay"
       v-if="mobileOpen"
+      class="mobile-overlay"
       @click="mobileOpen = false"
     ></div>
-    <div class="main-content" :class="{ expanded: sidebarCollapsed }">
-      <header class="top-header">
+
+    <div class="admin-main" :class="{ expanded: sidebarCollapsed }">
+      <header class="admin-header">
         <div class="header-left">
-          <button class="toggle-btn" @click="toggleSidebar">
-            <Menu :size="22" />
+          <button
+            class="header-icon"
+            type="button"
+            aria-label="Buka navigasi"
+            @click="toggleSidebar"
+          >
+            <PanelLeft :size="19" />
           </button>
-          <h2 class="page-title">{{ currentPageTitle }}</h2>
+          <div>
+            <p class="breadcrumb">RentalKu / Platform</p>
+            <h1>{{ currentPageTitle }}</h1>
+          </div>
         </div>
         <div class="header-right">
           <button
-            class="theme-toggle"
+            class="header-icon"
+            type="button"
+            :aria-label="themeLabel"
             @click="themeStore.toggleTheme"
-            aria-label="Toggle theme"
           >
-            <Sun v-if="themeStore.isDark" :size="20" />
-            <Moon v-else :size="20" />
+            <Sun v-if="themeStore.isDark" :size="18" /><Moon
+              v-else
+              :size="18"
+            />
           </button>
-          <div class="admin-info">
-            <div class="admin-avatar">{{ adminInitial }}</div>
-            <span class="admin-name hide-mobile">{{
-              auth.admin?.name || "Admin"
-            }}</span>
+          <div class="admin-profile">
+            <span>{{ adminInitial }}</span>
+            <div class="hide-mobile">
+              <strong>{{ auth.admin?.name || "Administrator" }}</strong
+              ><small>Platform admin</small>
+            </div>
           </div>
         </div>
       </header>
@@ -68,9 +79,9 @@
 
     <ConfirmModal
       :isOpen="showLogoutModal"
-      title="Konfirmasi Keluar"
-      message="Apakah Anda yakin ingin keluar dari halaman admin?"
-      confirmText="Ya, Keluar"
+      title="Keluar dari dashboard?"
+      message="Sesi admin pada perangkat ini akan diakhiri."
+      confirmText="Keluar"
       confirmClass="btn-danger"
       @cancel="showLogoutModal = false"
       @confirm="executeLogout"
@@ -79,19 +90,20 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useAuthStore } from "../../stores/auth";
-import { useThemeStore } from "../../stores/theme";
 import {
+  Boxes,
   LayoutDashboard,
-  Users,
   LogOut,
-  Menu,
-  Sun,
   Moon,
+  PanelLeft,
+  Sun,
+  Users,
 } from "lucide-vue-next";
 import ConfirmModal from "./ConfirmModal.vue";
+import { useAuthStore } from "../../stores/auth";
+import { useThemeStore } from "../../stores/theme";
 
 const route = useRoute();
 const router = useRouter();
@@ -100,28 +112,24 @@ const themeStore = useThemeStore();
 const sidebarCollapsed = ref(false);
 const mobileOpen = ref(false);
 const showLogoutModal = ref(false);
-
 const navItems = [
-  { path: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/admin/dashboard", label: "Overview", icon: LayoutDashboard },
   { path: "/admin/subscribers", label: "Subscriber", icon: Users },
 ];
-
 const currentPageTitle = computed(
-  () => navItems.find((n) => n.path === route.path)?.label || "Admin",
+  () => navItems.find((item) => item.path === route.path)?.label || "Admin",
 );
 const adminInitial = computed(() =>
   (auth.admin?.name || "A").charAt(0).toUpperCase(),
 );
+const themeLabel = computed(() =>
+  themeStore.isDark ? "Gunakan mode terang" : "Gunakan mode gelap",
+);
 
 function toggleSidebar() {
-  if (window.innerWidth <= 768) mobileOpen.value = !mobileOpen.value;
+  if (window.innerWidth < 860) mobileOpen.value = !mobileOpen.value;
   else sidebarCollapsed.value = !sidebarCollapsed.value;
 }
-
-function handleLogout() {
-  showLogoutModal.value = true;
-}
-
 function executeLogout() {
   showLogoutModal.value = false;
   auth.logout();
@@ -130,212 +138,198 @@ function executeLogout() {
 </script>
 
 <style scoped>
-.admin-layout {
-  display: flex;
+.admin-shell {
   min-height: 100vh;
   background: var(--admin-bg);
 }
 .sidebar {
-  width: 260px;
-  background: var(--admin-sidebar);
-  border-right: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
   position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 100;
-  transition: width 0.3s;
+  inset: 0 auto 0 0;
+  z-index: 30;
+  display: flex;
+  width: 244px;
+  flex-direction: column;
+  padding: 20px 12px 12px;
+  background: var(--admin-sidebar);
+  color: #e6eeea;
+  transition:
+    width 0.2s,
+    transform 0.2s;
 }
 .sidebar.collapsed {
-  width: 72px;
-}
-.sidebar-header {
-  padding: 20px;
-  border-bottom: 1px solid var(--border-color);
-  text-align: center;
+  width: 68px;
 }
 .sidebar-brand {
-  font-size: 1.5rem;
-  font-weight: 800;
-  display: block;
-}
-.brand-short {
-  font-size: 1.3rem;
-  font-weight: 800;
-}
-.sidebar-badge {
-  display: inline-block;
-  margin-top: 6px;
-  padding: 2px 10px;
-  background: var(--accent-soft);
-  color: var(--text-accent);
-  border-radius: var(--radius-full);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-.sidebar-nav {
-  flex: 1;
-  padding: 16px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  overflow-y: auto;
-}
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-  font-weight: 500;
-  transition: all 0.2s;
-  text-decoration: none;
-  cursor: pointer;
-  background: none;
-  border: none;
-  width: 100%;
-  text-align: left;
-  font-family: inherit;
-}
-.nav-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary);
-}
-.nav-item.active {
-  background: var(--accent-soft);
-  color: var(--text-accent);
-}
-.sidebar.collapsed .nav-item {
-  justify-content: center;
-  padding: 12px;
-}
-.sidebar-footer {
-  padding: 12px;
-  border-top: 1px solid var(--border-color);
-}
-.logout-btn {
-  color: var(--danger) !important;
-}
-.main-content {
-  flex: 1;
-  margin-left: 260px;
-  transition: margin-left 0.3s;
-}
-.main-content.expanded {
-  margin-left: 72px;
-}
-.top-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 32px;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--admin-sidebar);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.toggle-btn {
-  background: none;
-  color: var(--text-secondary);
-  padding: 8px;
-  border-radius: var(--radius-sm);
-  transition: all 0.2s;
-}
-.toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary);
-}
-.page-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-}
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.theme-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: all 0.3s;
-}
-.theme-toggle:hover {
-  background: var(--bg-glass-hover);
-  color: var(--accent-primary);
-}
-.admin-info {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding-left: 16px;
-  border-left: 1px solid var(--border-color);
+  min-height: 36px;
+  padding: 0 8px;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
 }
-.admin-avatar {
-  width: 36px;
-  height: 36px;
-  background: var(--accent-gradient);
-  border-radius: 50%;
+.sidebar-brand > span {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  flex: 0 0 29px;
+  place-items: center;
+  border-radius: 5px;
+  background: #70d1c0;
+  color: #16332e;
+}
+.workspace-label {
+  margin: 22px 8px 8px;
+  color: #91a59b;
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.sidebar-nav {
+  display: grid;
+  gap: 4px;
+}
+.sidebar.collapsed .sidebar-nav {
+  margin-top: 26px;
+}
+.nav-item {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 11px;
+  padding: 0 10px;
+  border-radius: 5px;
+  color: #b9c9c0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: left;
+  background: transparent;
+}
+.nav-item:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.07);
+}
+.nav-item.router-link-active {
+  color: #15332d;
+  background: #d8f1eb;
+}
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 0;
+}
+.logout {
+  width: 100%;
+  margin-top: auto;
+  color: #e6a7a0;
+}
+.admin-main {
+  min-height: 100vh;
+  margin-left: 244px;
+  transition: margin-left 0.2s;
+}
+.admin-main.expanded {
+  margin-left: 68px;
+}
+.admin-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  min-height: 70px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 32px;
+  border-bottom: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--admin-bg) 92%, transparent);
+  backdrop-filter: blur(10px);
+}
+.header-left,
+.header-right,
+.admin-profile {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: white;
 }
-.admin-name {
-  font-size: 0.9rem;
-  font-weight: 500;
+.header-left {
+  gap: 13px;
+}
+.header-right {
+  gap: 15px;
+}
+.header-icon {
+  display: grid;
+  width: 35px;
+  height: 35px;
+  place-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  background: var(--surface);
   color: var(--text-secondary);
 }
+.breadcrumb {
+  color: var(--text-muted);
+  font-size: 0.71rem;
+}
+.admin-header h1 {
+  margin-top: 1px;
+  font-size: 1.05rem;
+}
+.admin-profile {
+  gap: 8px;
+}
+.admin-profile > span {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e7c8ad;
+  color: #6b3a22;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+.admin-profile strong,
+.admin-profile small {
+  display: block;
+}
+.admin-profile strong {
+  font-size: 0.78rem;
+}
+.admin-profile small {
+  color: var(--text-muted);
+  font-size: 0.67rem;
+}
 .content-area {
+  width: min(1440px, 100%);
+  margin: 0 auto;
   padding: 32px;
 }
-.sidebar-overlay {
+.mobile-overlay {
   display: none;
 }
-@media (max-width: 768px) {
+@media (max-width: 859px) {
   .sidebar {
     transform: translateX(-100%);
-    width: 260px !important;
   }
-  .sidebar.mobile-open {
+  .sidebar.open {
     transform: translateX(0);
   }
-  .sidebar-overlay {
-    display: block;
+  .mobile-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 99;
+    z-index: 29;
+    display: block;
+    background: rgba(16, 27, 24, 0.44);
   }
-  .main-content {
-    margin-left: 0 !important;
+  .admin-main,
+  .admin-main.expanded {
+    margin-left: 0;
   }
-  .top-header {
-    padding: 12px 16px;
+  .admin-header {
+    padding: 10px 16px;
   }
   .content-area {
-    padding: 16px;
+    padding: 20px 16px;
   }
 }
 </style>

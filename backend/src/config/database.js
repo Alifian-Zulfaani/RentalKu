@@ -22,18 +22,33 @@ db.exec(`
     name TEXT NOT NULL,
     email TEXT NOT NULL,
     whatsapp TEXT NOT NULL,
-    password TEXT NOT NULL,
     business_name TEXT,
     business_type TEXT,
     subdomain TEXT,
     plan TEXT DEFAULT 'lifetime',
     payment_method TEXT,
-    amount REAL DEFAULT 249000,
+    amount REAL DEFAULT 0,
     status TEXT DEFAULT 'pending' CHECK(status IN ('pending','confirmed','rejected')),
     confirmed_at DATETIME,
     notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+`);
+
+const subscriberColumns = db.prepare("PRAGMA table_info(subscribers)").all();
+if (subscriberColumns.some((column) => column.name === "password")) {
+  db.exec("ALTER TABLE subscribers DROP COLUMN password");
+}
+
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_subscribers_email
+  ON subscribers(email COLLATE NOCASE);
+
+  CREATE INDEX IF NOT EXISTS idx_subscribers_subdomain
+  ON subscribers(subdomain COLLATE NOCASE);
+
+  CREATE INDEX IF NOT EXISTS idx_subscribers_status_created_at
+  ON subscribers(status, created_at DESC);
 `);
 
 module.exports = db;

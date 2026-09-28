@@ -1,5 +1,31 @@
-const bcrypt = require("bcryptjs");
 const db = require("../config/database");
+const { logServerError } = require("../utils/http");
+
+function slugify(value) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 20);
+}
+
+function createAvailableSubdomain(value) {
+  const base = slugify(value) || "rental";
+  let candidate = base;
+  let suffix = 2;
+
+  while (
+    db
+      .prepare("SELECT 1 FROM subscribers WHERE subdomain = ? COLLATE NOCASE")
+      .get(candidate)
+  ) {
+    candidate = `${base.slice(0, 17)}-${suffix}`;
+    suffix += 1;
+  }
+
+  return candidate;
+}
 
 exports.checkout = (req, res) => {
   try {
@@ -7,54 +33,45 @@ exports.checkout = (req, res) => {
       name,
       email,
       whatsapp,
-      password,
       business_name,
       business_type,
       plan,
       payment_method,
     } = req.body;
 
-    if (!name || !email || !whatsapp || !password) {
-      return res.status(400).json({ message: "Semua field wajib diisi" });
-    }
-
     const existing = db
       .prepare(
-        "SELECT * FROM subscribers WHERE email = ? AND status = 'confirmed'",
+        "SELECT id, status FROM subscribers WHERE email = ? COLLATE NOCASE",
       )
       .get(email);
     if (existing) {
-      return res
-        .status(400)
-        .json({
-          message: "Email ini sudah terdaftar sebagai subscriber aktif",
-        });
+      return res.status(409).json({
+        message:
+          existing.status === "confirmed"
+            ? "Email ini sudah terdaftar sebagai subscriber aktif"
+            : "Pendaftaran dengan email ini sedang diproses",
+      });
     }
 
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    const amount = 249000;
-    const subdomain = (business_name || name)
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "")
-      .slice(0, 20);
+    const amount = 0;
+    const subdomain = createAvailableSubdomain(business_name || name);
 
     const result = db
       .prepare(
         `
-      INSERT INTO subscribers (name, email, whatsapp, password, business_name, business_type, subdomain, plan, payment_method, amount, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+      INSERT INTO subscribers (name, email, whatsapp, business_name, business_type, subdomain, plan, payment_method, amount, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
     `,
       )
       .run(
         name,
         email,
         whatsapp,
-        hashedPassword,
         business_name || null,
         business_type || null,
         subdomain,
         plan || "lifetime",
-        payment_method || "transfer",
+        payment_method || "free",
         amount,
       );
 
@@ -65,10 +82,11 @@ exports.checkout = (req, res) => {
       .get(result.lastInsertRowid);
 
     res.status(201).json({
-      message: "Pendaftaran berhasil! Silakan lakukan pembayaran.",
+      message: "Pendaftaran berhasil dan sedang menunggu review.",
       data: sub,
     });
   } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
+    logServerError("public.checkout", err);
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
