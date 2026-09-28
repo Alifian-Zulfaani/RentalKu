@@ -1,306 +1,534 @@
 <template>
   <div>
+    <AdminPageHeader
+      title="Order sewa"
+      description="Pantau booking, masa sewa, pengembalian, dan rincian transaksi pelanggan."
+    />
     <div class="toolbar">
-      <div class="toolbar-left">
-        <input
-          type="text"
-          class="form-input"
-          placeholder="Cari nomor order/nama..."
-          v-model="search"
-          @input="fetchData"
-        />
-        <select class="form-input" v-model="filterStatus" @change="fetchData">
-          <option value="">Semua Status</option>
-          <option value="booking">Booking</option>
-          <option value="active">Aktif</option>
-          <option value="completed">Selesai</option>
-        </select>
-      </div>
+      <input
+        v-model="search"
+        class="form-input"
+        type="search"
+        placeholder="Cari kode atau nama pemesan..."
+        @input="debouncedFetch"
+      /><select
+        v-model="filterStatus"
+        class="form-input"
+        @change="resetAndFetch"
+      >
+        <option value="">Semua status</option>
+        <option value="booking">Menunggu</option>
+        <option value="active">Sedang disewa</option>
+        <option value="late">Terlambat</option>
+        <option value="completed">Selesai</option>
+        <option value="cancelled">Dibatalkan</option>
+      </select>
     </div>
     <div class="glass-card table-card">
       <div class="table-wrapper">
-        <table class="data-table">
+        <table class="data-table has-actions">
           <thead>
             <tr>
-              <th>No. Order</th>
-              <th>Pelanggan</th>
-              <th>Durasi</th>
-              <th>Total Tagihan</th>
-              <th>Status</th>
-              <th>Aksi</th>
+              <th data-align="left">Kode order</th>
+              <th data-align="left">Nama pemesan</th>
+              <th data-align="center">Periode</th>
+              <th data-align="right">Total tagihan</th>
+              <th data-align="center">Status</th>
+              <th data-align="center">Aksi</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="o in orders" :key="o.id">
-              <td>
-                <code>{{ o.order_number }}</code>
+            <tr v-for="order in orders" :key="order.id">
+              <td data-align="left">
+                <code>{{ order.order_number }}</code>
               </td>
-              <td>
-                <div>{{ o.customer_name || "-" }}</div>
-                <small class="text-muted">{{ o.customer_whatsapp }}</small>
+              <td data-align="left">
+                <strong>{{ order.customer_name || "-" }}</strong
+                ><small class="text-muted cell-subtitle">{{
+                  order.customer_whatsapp
+                }}</small>
               </td>
-              <td>
-                <div>{{ formatDate(o.start_date) }}</div>
-                <small class="text-muted"
-                  >s/d {{ formatDate(o.end_date) }}</small
+              <td data-align="center">
+                <span>{{ formatDate(order.start_date) }}</span
+                ><small class="text-muted cell-subtitle"
+                  >s.d. {{ formatDate(order.end_date) }}</small
                 >
               </td>
-              <td>{{ formatRp(o.total_amount) }}</td>
-              <td>
-                <span class="badge" :class="'badge-' + statusColor(o.status)">{{
-                  o.status
-                }}</span>
+              <td data-align="right">
+                {{ formatCurrency(order.total_amount) }}
               </td>
-              <td>
+              <td data-align="center">
+                <span
+                  class="badge"
+                  :class="`badge-${statusColor(order.status)}`"
+                  >{{ orderStatusLabel(order.status) }}</span
+                >
+              </td>
+              <td data-align="center">
                 <div class="action-buttons">
-                  <button
-                    v-if="o.status === 'booking'"
-                    class="btn-icon text-success"
-                    @click="confirmStatus(o, 'active')"
-                    title="Mulai Sewa"
-                  >
-                    <PlayCircle :size="18" />
-                  </button>
-                  <button
-                    v-if="o.status === 'active' || o.status === 'late'"
-                    class="btn-icon text-info"
-                    @click="confirmStatus(o, 'completed')"
-                    title="Selesaikan"
-                  >
-                    <CheckCircle :size="18" />
-                  </button>
-                  <button
-                    v-if="o.status === 'booking'"
-                    class="btn-icon text-warning"
-                    @click="confirmStatus(o, 'cancelled')"
-                    title="Batalkan"
-                  >
-                    <XCircle :size="18" />
-                  </button>
+                  <ActionButton
+                    label="Detail"
+                    tone="neutral"
+                    @click="openDetail(order)"
+                    ><template #icon><Eye :size="15" /></template></ActionButton
+                  ><ActionButton
+                    v-if="order.status === 'booking'"
+                    label="Mulai sewa"
+                    tone="positive"
+                    @click="confirmStatus(order, 'active')"
+                    ><template #icon
+                      ><PlayCircle :size="15" /></template></ActionButton
+                  ><ActionButton
+                    v-if="['active', 'late'].includes(order.status)"
+                    label="Selesaikan"
+                    tone="info"
+                    @click="confirmStatus(order, 'completed')"
+                    ><template #icon
+                      ><CheckCircle :size="15" /></template></ActionButton
+                  ><ActionButton
+                    v-if="order.status === 'booking'"
+                    label="Batalkan"
+                    tone="warning"
+                    @click="confirmStatus(order, 'cancelled')"
+                    ><template #icon><XCircle :size="15" /></template
+                  ></ActionButton>
                 </div>
               </td>
             </tr>
             <tr v-if="!orders.length">
-              <td colspan="6" class="text-center text-muted">
-                Tidak ada data order
+              <td colspan="6" class="empty-state">
+                Tidak ada order yang sesuai.
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div class="pagination" v-if="pagination.totalPages > 1">
-        <button
-          class="btn btn-secondary btn-sm"
-          :disabled="pagination.page <= 1"
-          @click="changePage(pagination.page - 1)"
-        >
-          Prev
-        </button>
-        <span class="page-info"
-          >{{ pagination.page }} / {{ pagination.totalPages }}</span
-        >
-        <button
-          class="btn btn-secondary btn-sm"
-          :disabled="pagination.page >= pagination.totalPages"
-          @click="changePage(pagination.page + 1)"
-        >
-          Next
-        </button>
-      </div>
+      <PaginationControls
+        :page="pagination.page"
+        :total-pages="pagination.totalPages"
+        :total="pagination.total"
+        @change="changePage"
+      />
     </div>
 
-    <!-- Status Confirmation Modal -->
+    <Teleport to="body"
+      ><div
+        v-if="detailOpen"
+        class="modal-overlay"
+        @click.self="detailOpen = false"
+      >
+        <section
+          class="detail-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="order-detail-title"
+        >
+          <header>
+            <div>
+              <p>Detail pesanan</p>
+              <h2 id="order-detail-title">
+                {{ detail?.order_number || "Memuat..." }}
+              </h2>
+            </div>
+            <button
+              type="button"
+              aria-label="Tutup"
+              @click="detailOpen = false"
+            >
+              <X :size="20" />
+            </button>
+          </header>
+          <div v-if="detailLoading" class="empty-state">
+            Memuat rincian pesanan...
+          </div>
+          <div v-else-if="detail" class="detail-body">
+            <div class="detail-grid">
+              <div>
+                <span>Pemesan</span><strong>{{ detail.customer_name }}</strong
+                ><small
+                  >{{ detail.customer_whatsapp
+                  }}<template v-if="detail.customer_email">
+                    · {{ detail.customer_email }}</template
+                  ></small
+                >
+              </div>
+              <div>
+                <span>Status</span
+                ><strong
+                  ><em
+                    class="badge"
+                    :class="`badge-${statusColor(detail.status)}`"
+                    >{{ orderStatusLabel(detail.status) }}</em
+                  ></strong
+                >
+              </div>
+              <div>
+                <span>Periode sewa</span
+                ><strong
+                  >{{ formatDate(detail.start_date) }} —
+                  {{ formatDate(detail.end_date) }}</strong
+                ><small>{{ detail.rental_days }} hari</small>
+              </div>
+              <div>
+                <span>Dibuat</span
+                ><strong>{{ formatDate(detail.created_at) }}</strong>
+              </div>
+            </div>
+            <div class="detail-table">
+              <h3>Barang yang disewa</h3>
+              <div class="table-wrapper">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th data-align="left">Nama barang</th>
+                      <th data-align="center">Tarif</th>
+                      <th data-align="right">Harga satuan</th>
+                      <th data-align="right">Jumlah</th>
+                      <th data-align="right">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="item in detail.items" :key="item.id">
+                      <td data-align="left">{{ item.item_name }}</td>
+                      <td data-align="center">
+                        {{ rateLabel(item.rate_type) }}
+                      </td>
+                      <td data-align="right">
+                        {{ formatCurrency(item.rate_amount) }}
+                      </td>
+                      <td data-align="right">{{ item.quantity }}</td>
+                      <td data-align="right">
+                        <strong>{{ formatCurrency(item.subtotal) }}</strong>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div v-if="detail.notes" class="order-note">
+              <span>Catatan</span>
+              <p>{{ detail.notes }}</p>
+            </div>
+            <footer>
+              <span>Total tagihan</span
+              ><strong>{{ formatCurrency(detail.total_amount) }}</strong>
+            </footer>
+          </div>
+        </section>
+      </div></Teleport
+    >
     <ConfirmModal
       v-model:isOpen="showStatusModal"
       :title="statusModalTitle"
       :message="statusModalMessage"
-      :type="statusModalType"
+      :type="targetStatus === 'cancelled' ? 'danger' : 'info'"
       :confirmText="statusModalConfirmText"
-      :confirmBtnClass="statusModalConfirmClass"
+      :confirmBtnClass="
+        targetStatus === 'cancelled' ? 'btn-danger' : 'btn-primary'
+      "
       :isLoading="isSubmitting"
       @confirm="executeStatusChange"
+    />
+    <ToastMessage
+      :message="toast.message"
+      :type="toast.type"
+      @close="toast.message = ''"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
+import { CheckCircle, Eye, PlayCircle, X, XCircle } from "lucide-vue-next";
 import api from "../../services/api";
-import { PlayCircle, CheckCircle, XCircle } from "lucide-vue-next";
+import ActionButton from "../../components/admin/ActionButton.vue";
+import AdminPageHeader from "../../components/admin/AdminPageHeader.vue";
 import ConfirmModal from "../../components/admin/ConfirmModal.vue";
+import PaginationControls from "../../components/admin/PaginationControls.vue";
+import ToastMessage from "../../components/shared/ToastMessage.vue";
+import {
+  formatCurrency,
+  formatDate,
+  getApiError,
+  orderStatusLabel,
+} from "../../utils/formatters";
 
 const orders = ref([]);
-const pagination = reactive({ page: 1, totalPages: 1 });
+const pagination = reactive({ page: 1, totalPages: 1, total: 0 });
 const search = ref("");
 const filterStatus = ref("");
-
-// Status Modal State
 const showStatusModal = ref(false);
 const selectedOrder = ref(null);
 const targetStatus = ref("");
 const isSubmitting = ref(false);
-
-const formatRp = (v) => "Rp" + (v || 0).toLocaleString("id-ID");
-const formatDate = (d) =>
-  d
-    ? new Date(d).toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "short",
-      })
-    : "-";
-const statusColor = (s) =>
+const detailOpen = ref(false);
+const detailLoading = ref(false);
+const detail = ref(null);
+const toast = reactive({ message: "", type: "success" });
+let searchTimer;
+const statusColor = (status) =>
   ({
     booking: "info",
     active: "success",
     late: "danger",
     completed: "default",
     cancelled: "warning",
-  })[s] || "default";
-
+  })[status] || "default";
 async function fetchData() {
   try {
     const { data } = await api.get("/orders", {
       params: {
         search: search.value,
-        status: filterStatus.value,
+        status: filterStatus.value || undefined,
         page: pagination.page,
       },
     });
+    const lastPage = Math.max(data.pagination.totalPages, 1);
+    if (pagination.page > lastPage) {
+      pagination.page = lastPage;
+      return fetchData();
+    }
     orders.value = data.data;
     Object.assign(pagination, data.pagination);
-  } catch (e) {
-    console.error(e);
+  } catch (error) {
+    showError(error, "Data order belum dapat dimuat.");
   }
 }
-function changePage(p) {
-  pagination.page = p;
+function showError(error, fallback) {
+  toast.message = getApiError(error, fallback);
+  toast.type = "error";
+}
+function resetAndFetch() {
+  pagination.page = 1;
   fetchData();
 }
-
-// Status Change Logic
-const statusModalTitle = computed(() => {
-  if (targetStatus.value === "active") return "Mulai Masa Sewa";
-  if (targetStatus.value === "completed") return "Selesaikan Pesanan";
-  return "Batalkan Pesanan";
-});
-const statusModalMessage = computed(() => {
-  if (targetStatus.value === "active")
-    return `Tandai pesanan ${selectedOrder.value?.order_number} sebagai sedang disewa/aktif?`;
-  if (targetStatus.value === "completed")
-    return `Apakah pelanggan telah mengembalikan barang dan pesanan ${selectedOrder.value?.order_number} selesai?`;
-  return `Yakin ingin membatalkan pesanan ${selectedOrder.value?.order_number}?`;
-});
-const statusModalType = computed(() =>
-  targetStatus.value === "cancelled" ? "danger" : "info",
-);
-const statusModalConfirmText = computed(() => {
-  if (targetStatus.value === "active") return "Ya, Mulai";
-  if (targetStatus.value === "completed") return "Ya, Selesai";
-  return "Ya, Batalkan";
-});
-const statusModalConfirmClass = computed(() => {
-  if (targetStatus.value === "active") return "btn-success";
-  if (targetStatus.value === "completed") return "btn-info";
-  return "btn-danger";
-});
-
+function changePage(page) {
+  pagination.page = Math.min(Math.max(page, 1), pagination.totalPages);
+  fetchData();
+}
+function debouncedFetch() {
+  clearTimeout(searchTimer);
+  pagination.page = 1;
+  searchTimer = setTimeout(fetchData, 300);
+}
+async function openDetail(order) {
+  detailOpen.value = true;
+  detailLoading.value = true;
+  detail.value = null;
+  try {
+    const { data } = await api.get(`/orders/${order.id}`);
+    const start = new Date(`${data.start_date}T00:00:00`);
+    const end = new Date(`${data.end_date}T00:00:00`);
+    data.rental_days = Math.floor((end - start) / 86_400_000) + 1;
+    detail.value = data;
+  } catch (error) {
+    detailOpen.value = false;
+    showError(error, "Detail order belum dapat dimuat.");
+  } finally {
+    detailLoading.value = false;
+  }
+}
 function confirmStatus(order, status) {
   selectedOrder.value = order;
   targetStatus.value = status;
   showStatusModal.value = true;
 }
-
+const statusModalTitle = computed(() =>
+  targetStatus.value === "active"
+    ? "Mulai masa sewa"
+    : targetStatus.value === "completed"
+      ? "Selesaikan pesanan"
+      : "Batalkan pesanan",
+);
+const statusModalMessage = computed(() =>
+  targetStatus.value === "active"
+    ? `Tandai ${selectedOrder.value?.order_number} sebagai sedang disewa?`
+    : targetStatus.value === "completed"
+      ? `Pastikan barang pada ${selectedOrder.value?.order_number} sudah kembali.`
+      : `Batalkan pesanan ${selectedOrder.value?.order_number}?`,
+);
+const statusModalConfirmText = computed(() =>
+  targetStatus.value === "active"
+    ? "Mulai sewa"
+    : targetStatus.value === "completed"
+      ? "Selesaikan"
+      : "Batalkan",
+);
 async function executeStatusChange() {
   isSubmitting.value = true;
   try {
-    await api.put(`/orders/${selectedOrder.value.id}/status`, {
+    await api.patch(`/orders/${selectedOrder.value.id}/status`, {
       status: targetStatus.value,
     });
     showStatusModal.value = false;
-    fetchData();
-  } catch (e) {
-    alert(e.response?.data?.message || "Gagal mengubah status");
+    toast.message = "Status order berhasil diperbarui.";
+    toast.type = "success";
+    await fetchData();
+  } catch (error) {
+    showError(error, "Status order belum dapat diperbarui.");
   } finally {
     isSubmitting.value = false;
   }
 }
-
+const rateLabel = (value) =>
+  ({ daily: "Harian", weekly: "Mingguan", monthly: "Bulanan" })[value] || value;
 onMounted(fetchData);
+onBeforeUnmount(() => clearTimeout(searchTimer));
 </script>
 
 <style scoped>
 .toolbar {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-.toolbar-left {
-  display: flex;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: minmax(240px, 360px) 190px;
+  gap: 10px;
+  margin-bottom: 18px;
 }
 .table-card {
-  padding: 0;
   overflow: hidden;
 }
-.table-wrapper {
-  overflow-x: auto;
-}
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.data-table th {
-  text-align: left;
-  padding: 14px 16px;
-  font-size: 0.8rem;
-  border-bottom: 1px solid var(--border-color);
-  background: rgba(255, 255, 255, 0.02);
-}
-.data-table td {
-  padding: 14px 16px;
-  font-size: 0.9rem;
-  border-bottom: 1px solid var(--border-color);
-  vertical-align: middle;
-}
-.data-table code {
-  font-size: 0.85rem;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.05);
-}
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 16px;
-  border-top: 1px solid var(--border-color);
+.cell-subtitle {
+  display: block;
+  margin-top: 3px;
 }
 .action-buttons {
   display: flex;
-  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
 }
-.btn-icon {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
-  transition: background 0.2s;
+.data-table code {
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: var(--surface-subtle);
+  color: var(--text-primary);
+}
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  padding: 20px;
+  place-items: center;
+  background: rgba(10, 22, 16, 0.68);
+  backdrop-filter: blur(4px);
+}
+.detail-modal {
+  width: min(900px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-lg);
+}
+.detail-modal > header {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  padding: 22px 26px;
+  border-bottom: 1px solid var(--border-color);
 }
-.btn-icon:hover {
-  background: rgba(255, 255, 255, 0.1);
+.detail-modal header p {
+  color: var(--brand-primary);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
 }
-.text-success {
-  color: var(--success);
+.detail-modal header h2 {
+  margin-top: 4px;
+  font-size: 1.35rem;
 }
-.text-info {
-  color: var(--info);
+.detail-modal header button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-primary);
 }
-.text-warning {
-  color: var(--warning);
+.detail-body {
+  padding: 26px;
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--border-color);
+}
+.detail-grid > div {
+  padding: 15px;
+  background: var(--surface);
+}
+.detail-grid span,
+.order-note > span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.detail-grid strong,
+.detail-grid small {
+  display: block;
+}
+.detail-grid small {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+.detail-grid em {
+  font-style: normal;
+}
+.detail-table {
+  margin-top: 25px;
+}
+.detail-table h3 {
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+.order-note {
+  margin-top: 20px;
+  padding: 14px;
+  border-left: 3px solid var(--brand-moss);
+  background: var(--surface-subtle);
+}
+.order-note p {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+.detail-body > footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-color);
+}
+.detail-body > footer span {
+  color: var(--text-secondary);
+}
+.detail-body > footer strong {
+  font-size: 1.35rem;
+}
+.empty-state {
+  padding: 54px;
+  text-align: center;
+}
+@media (max-width: 620px) {
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .detail-body {
+    padding: 18px;
+  }
 }
 </style>

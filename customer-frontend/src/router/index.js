@@ -5,16 +5,42 @@ const routes = [
     path: "/",
     name: "Landing",
     component: () => import("../views/public/LandingPage.vue"),
+    meta: {
+      seo: {
+        title: "Summit Gear | Rental Peralatan Outdoor",
+        description:
+          "Sewa peralatan outdoor yang terawat dengan proses booking yang ringkas.",
+      },
+    },
+  },
+  {
+    path: "/sewa",
+    name: "Rental",
+    component: () => import("../views/public/RentalPage.vue"),
+    meta: {
+      seo: {
+        title: "Sewa Perlengkapan | Summit Gear",
+        description:
+          "Pilih gear outdoor dan lakukan booking dalam dua langkah.",
+      },
+    },
   },
   {
     path: "/admin/login",
     name: "AdminLogin",
     component: () => import("../views/admin/LoginPage.vue"),
+    meta: {
+      guestOnly: true,
+      seo: { title: "Login Admin | Summit Gear", noindex: true },
+    },
   },
   {
     path: "/admin",
     component: () => import("../components/admin/AdminLayout.vue"),
-    meta: { requiresAuth: true },
+    meta: {
+      requiresAuth: true,
+      seo: { title: "Panel Admin | Summit Gear", noindex: true },
+    },
     children: [
       { path: "", redirect: "/admin/dashboard" },
       {
@@ -44,6 +70,7 @@ const routes = [
       },
     ],
   },
+  { path: "/:pathMatch(.*)*", redirect: "/" },
 ];
 
 const router = createRouter({
@@ -55,11 +82,13 @@ const router = createRouter({
   },
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
   const token = localStorage.getItem("customer_rentalku_token");
-  if (to.matched.some((r) => r.meta.requiresAuth) && !token)
-    next("/admin/login");
-  else next();
+  if (to.matched.some((record) => record.meta.requiresAuth) && !token) {
+    return { path: "/admin/login", query: { redirect: to.fullPath } };
+  }
+  if (to.meta.guestOnly && token) return "/admin/dashboard";
+  return true;
 });
 
 export default router;

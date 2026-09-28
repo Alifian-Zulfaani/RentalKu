@@ -2,16 +2,19 @@
   <footer class="footer">
     <div class="container footer-content">
       <div class="footer-brand">
-        <h3 :style="{ color: config.primary_color }">
-          {{ config.business_name }}
-        </h3>
-        <p>{{ config.tagline }}</p>
+        <BrandMark
+          :name="config.business_name || 'RentalKu Outdoor'"
+          :logo-url="config.logo_url"
+          descriptor="Outdoor gear rental"
+        />
+        <p>{{ config.description || config.tagline }}</p>
       </div>
       <div class="footer-links">
         <h4>Tautan</h4>
-        <a href="#">Beranda</a>
-        <a href="#katalog">Katalog</a>
-        <a href="#tentang">Tentang Kami</a>
+        <router-link to="/">Beranda</router-link>
+        <router-link to="/#katalog">Katalog</router-link>
+        <router-link to="/#tentang">Tentang Kami</router-link>
+        <router-link to="/sewa">Sewa perlengkapan</router-link>
       </div>
       <div class="footer-contact">
         <h4>Kontak</h4>
@@ -22,15 +25,16 @@
     </div>
     <div class="footer-bottom">
       <p>
-        &copy; {{ new Date().getFullYear() }} {{ config.business_name }}. All
-        rights reserved.
+        &copy; {{ new Date().getFullYear() }} {{ config.business_name }}. Semua
+        hak dilindungi.
       </p>
       <p class="powered-by">
         Powered by
         <a
-          href="http://localhost:5173"
+          :href="platformUrl"
           target="_blank"
-          style="color: #7c3aed; font-weight: bold"
+          rel="noopener noreferrer"
+          style="color: var(--brand-primary); font-weight: bold"
           >RentalKu</a
         >
       </p>
@@ -39,12 +43,16 @@
 </template>
 
 <script setup>
+import BrandMark from "../shared/BrandMark.vue";
 defineProps({ config: Object });
+const platformUrl =
+  import.meta.env.VITE_PLATFORM_URL || "http://localhost:5173";
 </script>
 
 <style scoped>
 .footer {
-  background: var(--bg-surface);
+  background: var(--footer-bg);
+  color: #eef3ef;
   border-top: 1px solid var(--border-color);
   padding-top: 60px;
 }
@@ -54,12 +62,9 @@ defineProps({ config: Object });
   gap: 40px;
   margin-bottom: 40px;
 }
-.footer-brand h3 {
-  font-size: 1.5rem;
-  margin-bottom: 12px;
-}
 .footer-brand p {
-  color: var(--text-secondary);
+  margin-top: 17px;
+  color: #aebdb5;
   max-width: 300px;
 }
 .footer-links,
@@ -72,15 +77,15 @@ defineProps({ config: Object });
 .footer-contact h4 {
   font-size: 1.1rem;
   margin-bottom: 8px;
-  color: var(--text-primary);
+  color: #eef3ef;
 }
 .footer-links a,
 .footer-contact p {
-  color: var(--text-secondary);
+  color: #aebdb5;
   font-size: 0.95rem;
 }
 .footer-links a:hover {
-  color: var(--text-primary);
+  color: #ffffff;
 }
 .footer-bottom {
   border-top: 1px solid var(--border-color);

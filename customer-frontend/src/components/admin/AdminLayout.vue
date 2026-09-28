@@ -6,13 +6,12 @@
     >
       <div class="sidebar-header">
         <router-link to="/admin/dashboard" class="sidebar-brand">
-          <span
-            class="brand-full"
-            v-if="!sidebarCollapsed"
-            :style="{ color: config?.primary_color || 'var(--brand-primary)' }"
-            >{{ config?.business_name || "Admin" }}</span
-          >
-          <span class="brand-short text-gradient" v-else>A</span>
+          <BrandMark
+            :name="config?.business_name || 'RentalKu Outdoor'"
+            :logo-url="config?.logo_url"
+            :compact="sidebarCollapsed"
+            descriptor="Panel pengelola"
+          />
         </router-link>
       </div>
       <nav class="sidebar-nav">
@@ -52,7 +51,9 @@
           <button
             class="theme-toggle"
             @click="themeStore.toggleTheme"
-            aria-label="Toggle theme"
+            :aria-label="
+              themeStore.isDark ? 'Gunakan mode terang' : 'Gunakan mode gelap'
+            "
           >
             <Sun v-if="themeStore.isDark" :size="20" />
             <Moon v-else :size="20" />
@@ -85,6 +86,11 @@
       confirmBtnClass="btn-danger"
       @confirm="executeLogout"
     />
+    <ToastMessage
+      :message="configError"
+      type="error"
+      @close="configError = ''"
+    />
   </div>
 </template>
 
@@ -106,6 +112,9 @@ import {
   Moon,
 } from "lucide-vue-next";
 import ConfirmModal from "./ConfirmModal.vue";
+import ToastMessage from "../shared/ToastMessage.vue";
+import BrandMark from "../shared/BrandMark.vue";
+import { getApiError } from "../../utils/formatters";
 
 const route = useRoute();
 const router = useRouter();
@@ -115,6 +124,7 @@ const sidebarCollapsed = ref(false);
 const mobileOpen = ref(false);
 const config = ref(null);
 const showLogoutModal = ref(false);
+const configError = ref("");
 
 const navItems = [
   { path: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -150,7 +160,20 @@ onMounted(async () => {
   try {
     const { data } = await api.get("/site-config");
     config.value = data;
-  } catch (e) {}
+    document.documentElement.style.setProperty(
+      "--brand-primary",
+      data.primary_color,
+    );
+    document.documentElement.style.setProperty(
+      "--brand-secondary",
+      data.secondary_color,
+    );
+  } catch (error) {
+    configError.value = getApiError(
+      error,
+      "Identitas toko belum dapat dimuat.",
+    );
+  }
 });
 </script>
 
@@ -177,21 +200,20 @@ onMounted(async () => {
   width: 72px;
 }
 .sidebar-header {
-  padding: 20px;
+  min-height: 77px;
+  padding: 18px 17px;
   border-bottom: 1px solid var(--border-color);
   text-align: center;
 }
 .sidebar-brand {
-  font-size: 1.5rem;
-  font-weight: 800;
-  display: block;
+  display: flex;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.brand-short {
-  font-size: 1.3rem;
-  font-weight: 800;
+.sidebar-brand :deep(.brand-copy small) {
+  color: var(--text-muted);
 }
 .sidebar-nav {
   flex: 1;
@@ -207,7 +229,7 @@ onMounted(async () => {
   gap: 12px;
   padding: 12px 16px;
   border-radius: var(--radius-sm);
-  color: var(--text-secondary);
+  color: var(--admin-nav-text);
   font-size: 0.95rem;
   font-weight: 500;
   transition: all 0.2s;
@@ -220,13 +242,17 @@ onMounted(async () => {
   font-family: inherit;
 }
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary);
+  background: var(--admin-nav-hover);
+  color: var(--admin-nav-active);
 }
 .nav-item.active {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary);
-  border-left: 3px solid var(--brand-primary, #16a34a);
+  background: color-mix(
+    in srgb,
+    var(--brand-primary) 11%,
+    var(--admin-sidebar)
+  );
+  color: var(--admin-nav-active);
+  box-shadow: inset 3px 0 var(--brand-primary);
 }
 .sidebar.collapsed .nav-item {
   justify-content: center;
@@ -238,10 +264,11 @@ onMounted(async () => {
   border-top: 1px solid var(--border-color);
 }
 .logout-btn {
-  color: var(--danger) !important;
+  color: #e8a59f !important;
 }
 .main-content {
   flex: 1;
+  min-width: 0;
   margin-left: 260px;
   transition: margin-left 0.3s;
 }
@@ -254,7 +281,9 @@ onMounted(async () => {
   justify-content: space-between;
   padding: 16px 32px;
   border-bottom: 1px solid var(--border-color);
-  background: var(--admin-sidebar);
+  background: var(--admin-header);
+  color: var(--text-primary);
+  backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
   z-index: 50;
@@ -274,7 +303,7 @@ onMounted(async () => {
   border: none;
 }
 .toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--admin-nav-hover);
   color: var(--text-primary);
 }
 .page-title {
@@ -292,7 +321,7 @@ onMounted(async () => {
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: var(--bg-glass);
+  background: var(--surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
@@ -300,7 +329,7 @@ onMounted(async () => {
   transition: all 0.3s;
 }
 .theme-toggle:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-subtle);
   color: var(--brand-primary);
 }
 .admin-info {
@@ -327,6 +356,7 @@ onMounted(async () => {
   color: var(--text-secondary);
 }
 .content-area {
+  min-width: 0;
   padding: 32px;
 }
 .sidebar-overlay {

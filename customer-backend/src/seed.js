@@ -24,7 +24,7 @@ const existingConfig = db
 if (!existingConfig) {
   db.prepare(
     `INSERT INTO site_config (id, business_name, tagline, description, primary_color, secondary_color, whatsapp, email, address, hero_title, hero_subtitle, about_text)
-    VALUES (1, 'Summit Gear', 'Sewa Peralatan Outdoor Terlengkap', 'Menyediakan peralatan hiking, camping, dan outdoor berkualitas untuk petualangan Anda.', '#16a34a', '#854d0e', '081234567890', 'hello@summitgear.com', 'Jl. Gunung Merapi No. 42, Yogyakarta', 'Siap Untuk Petualangan Berikutnya?', 'Sewa peralatan outdoor premium tanpa ribet. Semua lengkap, semua terawat.', 'Summit Gear adalah rental peralatan outdoor terpercaya sejak 2020. Kami menyediakan peralatan hiking, camping, dan mountaineering berkualitas tinggi dengan harga terjangkau. Semua peralatan kami selalu dicek dan dirawat sebelum disewakan untuk memastikan keamanan dan kenyamanan petualangan Anda.')`,
+    VALUES (1, 'Summit Gear', 'Sewa Gear untuk Mendaki & Berkemah', 'Perlengkapan hiking dan camping yang terawat untuk perjalanan yang lebih ringan.', '#2f5948', '#c66e46', '081234567890', 'hello@summitgear.com', 'Jl. Gunung Merapi No. 42, Yogyakarta', 'Lebih ringan berangkat. Lebih jauh menjelajah.', 'Sewa perlengkapan hiking dan camping yang terawat. Pilih alat, tentukan tanggal, lalu tim kami menyiapkannya untuk perjalananmu.', 'Summit Gear membantu pendaki, camper, dan penjelajah akhir pekan mendapatkan perlengkapan yang tepat tanpa harus membeli semuanya. Setiap gear dibersihkan, dicek, dan disiapkan kembali sebelum disewakan agar perjalananmu lebih aman dan nyaman.')`,
   ).run();
   console.log("✅ Site config seeded");
 }

@@ -1,5 +1,8 @@
 <template>
   <div>
+    <AdminPageHeader title="Inventaris" description="Kelola stok, tarif, kategori, dan kesiapan seluruh perlengkapan rental.">
+      <template #actions><button class="btn btn-primary" @click="openFormModal()"><Plus :size="18" /> Tambah barang</button></template>
+    </AdminPageHeader>
     <div class="toolbar">
       <div class="toolbar-left">
         <input
@@ -7,43 +10,38 @@
           class="form-input"
           placeholder="Cari barang..."
           v-model="search"
-          @input="fetchData"
+          @input="debouncedFetch"
         />
-        <select class="form-input" v-model="filterStatus" @change="fetchData">
+        <select class="form-input" v-model="filterStatus" @change="resetAndFetch">
           <option value="">Semua Status</option>
           <option value="active">Aktif</option>
-          <option value="maintenance">Maintenance</option>
+          <option value="maintenance">Perawatan</option>
           <option value="inactive">Nonaktif</option>
         </select>
-      </div>
-      <div class="toolbar-right">
-        <button class="btn btn-primary" @click="openFormModal()">
-          <Plus :size="18" /> Tambah Barang
-        </button>
       </div>
     </div>
     <div class="glass-card table-card">
       <div class="table-wrapper">
-        <table class="data-table">
+        <table class="data-table has-actions">
           <thead>
             <tr>
-              <th>Barang</th>
-              <th>Kategori</th>
-              <th>Stok (Tersedia)</th>
-              <th>Tarif/Hari</th>
-              <th>Status</th>
-              <th>Aksi</th>
+              <th data-align="left">Nama barang</th>
+              <th data-align="center">Kategori</th>
+              <th data-align="right">Stok (tersedia)</th>
+              <th data-align="right">Tarif per hari</th>
+              <th data-align="center">Status</th>
+              <th data-align="center">Aksi</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="i in items" :key="i.id">
-              <td>
+              <td data-align="left">
                 <strong>{{ i.name }}</strong>
               </td>
-              <td>{{ i.category_name || "-" }}</td>
-              <td>{{ i.stock }} ({{ i.available_stock }})</td>
-              <td>{{ formatRp(i.rate_daily) }}</td>
-              <td>
+              <td data-align="center"><span class="badge badge-default">{{ i.category_name || "Tanpa kategori" }}</span></td>
+              <td data-align="right">{{ i.stock }} ({{ i.available_stock }})</td>
+              <td data-align="right">{{ formatRp(i.rate_daily) }}</td>
+              <td data-align="center">
                 <span
                   class="badge"
                   :class="
@@ -54,25 +52,17 @@
                         ? 'warning'
                         : 'danger')
                   "
-                  >{{ i.status }}</span
+                  >{{ inventoryStatusLabel(i.status) }}</span
                 >
               </td>
-              <td>
+              <td data-align="center">
                 <div class="action-buttons">
-                  <button
-                    class="btn-icon text-info"
-                    @click="openFormModal(i)"
-                    title="Edit"
-                  >
-                    <Edit :size="18" />
-                  </button>
-                  <button
-                    class="btn-icon text-danger"
-                    @click="confirmDelete(i)"
-                    title="Hapus"
-                  >
-                    <Trash2 :size="18" />
-                  </button>
+                  <ActionButton label="Edit" tone="info" @click="openFormModal(i)">
+                    <template #icon><Edit :size="15" /></template>
+                  </ActionButton>
+                  <ActionButton label="Hapus" tone="danger" @click="confirmDelete(i)">
+                    <template #icon><Trash2 :size="15" /></template>
+                  </ActionButton>
                 </div>
               </td>
             </tr>
@@ -82,25 +72,7 @@
           </tbody>
         </table>
       </div>
-      <div class="pagination" v-if="pagination.totalPages > 1">
-        <button
-          class="btn btn-secondary btn-sm"
-          :disabled="pagination.page <= 1"
-          @click="changePage(pagination.page - 1)"
-        >
-          Prev
-        </button>
-        <span class="page-info"
-          >{{ pagination.page }} / {{ pagination.totalPages }}</span
-        >
-        <button
-          class="btn btn-secondary btn-sm"
-          :disabled="pagination.page >= pagination.totalPages"
-          @click="changePage(pagination.page + 1)"
-        >
-          Next
-        </button>
-      </div>
+      <PaginationControls :page="pagination.page" :total-pages="pagination.totalPages" :total="pagination.total" @change="changePage" />
     </div>
 
     <!-- Form Modal (Create/Edit) -->
@@ -149,22 +121,34 @@
               <div class="form-group row-group">
                 <div class="col">
                   <label class="form-label">Tarif Harian (Rp)</label>
-                  <input
-                    type="number"
-                    class="form-input"
-                    v-model="formData.rate_daily"
-                    min="0"
-                    required
-                  />
+                  <input type="number" class="form-input" v-model.number="formData.rate_daily" min="0" required />
+                </div>
+                <div class="col">
+                  <label class="form-label">Tarif Mingguan (Rp)</label>
+                  <input type="number" class="form-input" v-model.number="formData.rate_weekly" min="0" required />
+                </div>
+              </div>
+              <div class="form-group row-group">
+                <div class="col">
+                  <label class="form-label">Tarif Bulanan (Rp)</label>
+                  <input type="number" class="form-input" v-model.number="formData.rate_monthly" min="0" required />
                 </div>
                 <div class="col">
                   <label class="form-label">Status</label>
                   <select class="form-input" v-model="formData.status" required>
                     <option value="active">Aktif</option>
-                    <option value="maintenance">Maintenance</option>
+                    <option value="maintenance">Perawatan</option>
                     <option value="inactive">Nonaktif</option>
                   </select>
                 </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">URL Gambar <span class="text-muted">(opsional)</span></label>
+                <input type="url" class="form-input" v-model.trim="formData.image_url" placeholder="https://..." />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Deskripsi</label>
+                <textarea class="form-input" v-model.trim="formData.description" rows="3" maxlength="2000"></textarea>
               </div>
             </div>
             <div class="modal-footer">
@@ -199,18 +183,24 @@
       :isLoading="isSubmitting"
       @confirm="executeDelete"
     />
+    <ToastMessage :message="toast.message" :type="toast.type" @close="toast.message = ''" />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onBeforeUnmount, onMounted } from "vue";
 import api from "../../services/api";
 import { Plus, Edit, Trash2 } from "lucide-vue-next";
 import ConfirmModal from "../../components/admin/ConfirmModal.vue";
+import ToastMessage from "../../components/shared/ToastMessage.vue";
+import ActionButton from "../../components/admin/ActionButton.vue";
+import AdminPageHeader from "../../components/admin/AdminPageHeader.vue";
+import PaginationControls from "../../components/admin/PaginationControls.vue";
+import { formatCurrency, getApiError, inventoryStatusLabel } from "../../utils/formatters";
 
 const items = ref([]);
 const categories = ref([]);
-const pagination = reactive({ page: 1, totalPages: 1 });
+const pagination = reactive({ page: 1, totalPages: 1, total: 0 });
 const search = ref("");
 const filterStatus = ref("");
 
@@ -224,14 +214,20 @@ const formData = reactive({
   category_id: "",
   stock: 0,
   rate_daily: 0,
+  rate_weekly: 0,
+  rate_monthly: 0,
   status: "active",
+  image_url: "",
+  description: "",
 });
 
 // Delete State
 const showDeleteModal = ref(false);
 const selectedItem = ref(null);
+const toast = reactive({ message: "", type: "success" });
+let searchTimer;
 
-const formatRp = (v) => "Rp" + (v || 0).toLocaleString("id-ID");
+const formatRp = formatCurrency;
 
 async function fetchData() {
   try {
@@ -242,6 +238,8 @@ async function fetchData() {
         page: pagination.page,
       },
     });
+    const lastPage = Math.max(data.pagination.totalPages, 1);
+    if (pagination.page > lastPage) { pagination.page = lastPage; return fetchData(); }
     items.value = data.data;
     Object.assign(pagination, data.pagination);
 
@@ -250,12 +248,19 @@ async function fetchData() {
       categories.value = catRes.data;
     }
   } catch (e) {
-    console.error(e);
+    toast.message = getApiError(e, "Data inventaris belum dapat dimuat.");
+    toast.type = "error";
   }
 }
 function changePage(p) {
-  pagination.page = p;
+  pagination.page = Math.min(Math.max(p, 1), pagination.totalPages);
   fetchData();
+}
+function resetAndFetch() { pagination.page = 1; fetchData(); }
+function debouncedFetch() {
+  clearTimeout(searchTimer);
+  pagination.page = 1;
+  searchTimer = setTimeout(fetchData, 300);
 }
 
 // CRUD Actions
@@ -268,7 +273,11 @@ function openFormModal(item = null) {
       category_id: item.category_id || "",
       stock: item.stock,
       rate_daily: item.rate_daily,
+      rate_weekly: item.rate_weekly,
+      rate_monthly: item.rate_monthly,
       status: item.status,
+      image_url: item.image_url || "",
+      description: item.description || "",
     });
   } else {
     Object.assign(formData, {
@@ -277,7 +286,11 @@ function openFormModal(item = null) {
       category_id: "",
       stock: 0,
       rate_daily: 0,
+      rate_weekly: 0,
+      rate_monthly: 0,
       status: "active",
+      image_url: "",
+      description: "",
     });
   }
   showFormModal.value = true;
@@ -289,9 +302,12 @@ async function saveItem() {
     if (isEdit.value) await api.put(`/inventory/${formData.id}`, formData);
     else await api.post("/inventory", formData);
     showFormModal.value = false;
-    fetchData();
+    toast.message = isEdit.value ? "Barang berhasil diperbarui." : "Barang berhasil ditambahkan.";
+    toast.type = "success";
+    await fetchData();
   } catch (e) {
-    alert(e.response?.data?.message || "Terjadi kesalahan");
+    toast.message = getApiError(e, "Barang belum dapat disimpan.");
+    toast.type = "error";
   } finally {
     isSubmitting.value = false;
   }
@@ -307,15 +323,19 @@ async function executeDelete() {
   try {
     await api.delete(`/inventory/${selectedItem.value.id}`);
     showDeleteModal.value = false;
-    fetchData();
+    toast.message = "Barang berhasil dihapus.";
+    toast.type = "success";
+    await fetchData();
   } catch (e) {
-    alert(e.response?.data?.message || "Gagal menghapus");
+    toast.message = getApiError(e, "Barang belum dapat dihapus.");
+    toast.type = "error";
   } finally {
     isSubmitting.value = false;
   }
 }
 
 onMounted(fetchData);
+onBeforeUnmount(() => clearTimeout(searchTimer));
 </script>
 
 <style scoped>
@@ -362,27 +382,9 @@ onMounted(fetchData);
 }
 .action-buttons {
   display: flex;
-  gap: 8px;
-}
-.btn-icon {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
-  transition: background 0.2s;
-  display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   justify-content: center;
-}
-.btn-icon:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-.text-info {
-  color: var(--info);
-}
-.text-danger {
-  color: var(--danger);
+  gap: 8px;
 }
 
 /* Modal Styles */
@@ -400,12 +402,14 @@ onMounted(fetchData);
 .modal-content {
   width: 100%;
   max-width: 500px;
+  max-height: calc(100vh - 40px);
   background: var(--bg-surface);
   border-radius: var(--radius-md);
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
+.modal-content form { overflow-y: auto; }
 .modal-header {
   padding: 20px 24px;
   border-bottom: 1px solid var(--border-color);

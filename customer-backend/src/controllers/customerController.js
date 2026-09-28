@@ -1,36 +1,27 @@
 const db = require("../config/database");
+const { getPagination, sendServerError } = require("../utils/http");
 
 exports.getAll = (req, res) => {
   try {
-    const { search, is_blacklisted, page = 1, limit = 10 } = req.query;
-    let q = `SELECT c.*, (SELECT COUNT(*) FROM orders WHERE customer_id = c.id) as total_orders FROM customers c WHERE 1=1`;
+    const { search, is_blacklisted } = req.query;
+    const { page, limit, offset } = getPagination(req.query);
+    let where = " WHERE 1=1";
     const p = [];
     if (search) {
-      q += ` AND (c.name LIKE ? OR c.email LIKE ? OR c.whatsapp LIKE ?)`;
+      where += " AND (c.name LIKE ? OR c.email LIKE ? OR c.whatsapp LIKE ?)";
       p.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
     if (is_blacklisted !== undefined && is_blacklisted !== "") {
-      q += ` AND c.is_blacklisted = ?`;
+      where += " AND c.is_blacklisted = ?";
       p.push(Number(is_blacklisted));
     }
-
-    const countQ = q
-      .replace(/SELECT .+? FROM/, "SELECT COUNT(*) as total FROM")
-      .replace(/ FROM customers c/, " FROM customers c");
-    const total =
-      db
-        .prepare(
-          countQ.split("FROM customers")[0] +
-            "FROM customers c" +
-            countQ.split("FROM customers c")[1],
-        )
-        .get(...p)?.total || 0;
-    const offset = (page - 1) * limit;
-    q += ` ORDER BY c.created_at DESC LIMIT ? OFFSET ?`;
-    p.push(Number(limit), offset);
+    const { total } = db
+      .prepare(`SELECT COUNT(*) as total FROM customers c${where}`)
+      .get(...p);
+    const q = `SELECT c.*, (SELECT COUNT(*) FROM orders WHERE customer_id = c.id) as total_orders FROM customers c${where} ORDER BY c.created_at DESC LIMIT ? OFFSET ?`;
 
     res.json({
-      data: db.prepare(q).all(...p),
+      data: db.prepare(q).all(...p, limit, offset),
       pagination: {
         total,
         page: Number(page),
@@ -39,7 +30,7 @@ exports.getAll = (req, res) => {
       },
     });
   } catch (e) {
-    res.status(500).json({ message: "Server error", error: e.message });
+    sendServerError(res, "customers.getAll", e);
   }
 };
 
@@ -57,14 +48,13 @@ exports.getById = (req, res) => {
       .all(req.params.id);
     res.json(c);
   } catch (e) {
-    res.status(500).json({ message: "Server error", error: e.message });
+    sendServerError(res, "customers.getById", e);
   }
 };
 
 exports.create = (req, res) => {
   try {
     const { name, email, whatsapp, address, notes } = req.body;
-    if (!name) return res.status(400).json({ message: "Nama wajib diisi" });
     const result = db
       .prepare(
         "INSERT INTO customers (name, email, whatsapp, address, notes) VALUES (?,?,?,?,?)",
@@ -84,7 +74,7 @@ exports.create = (req, res) => {
           .get(result.lastInsertRowid),
       );
   } catch (e) {
-    res.status(500).json({ message: "Server error", error: e.message });
+    sendServerError(res, "customers.create", e);
   }
 };
 
@@ -99,7 +89,7 @@ exports.update = (req, res) => {
     db.prepare(
       "UPDATE customers SET name=?, email=?, whatsapp=?, address=?, notes=? WHERE id=?",
     ).run(
-      name || c.name,
+      name ?? c.name,
       email !== undefined ? email : c.email,
       whatsapp !== undefined ? whatsapp : c.whatsapp,
       address !== undefined ? address : c.address,
@@ -110,7 +100,7 @@ exports.update = (req, res) => {
       db.prepare("SELECT * FROM customers WHERE id = ?").get(req.params.id),
     );
   } catch (e) {
-    res.status(500).json({ message: "Server error", error: e.message });
+    sendServerError(res, "customers.update", e);
   }
 };
 
@@ -121,7 +111,7 @@ exports.delete = (req, res) => {
     db.prepare("DELETE FROM customers WHERE id = ?").run(req.params.id);
     res.json({ message: "Customer berhasil dihapus" });
   } catch (e) {
-    res.status(500).json({ message: "Server error", error: e.message });
+    sendServerError(res, "customers.delete", e);
   }
 };
 
@@ -142,6 +132,6 @@ exports.toggleBlacklist = (req, res) => {
         : "Customer di-blacklist",
     });
   } catch (e) {
-    res.status(500).json({ message: "Server error", error: e.message });
+    sendServerError(res, "customers.toggleBlacklist", e);
   }
 };

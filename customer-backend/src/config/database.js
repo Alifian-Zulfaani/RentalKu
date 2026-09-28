@@ -1,7 +1,8 @@
 const Database = require("better-sqlite3");
 const path = require("path");
 
-const dbPath = path.join(__dirname, "..", "..", "database.sqlite");
+const dbPath =
+  process.env.DB_PATH || path.join(__dirname, "..", "..", "database.sqlite");
 const db = new Database(dbPath);
 
 db.pragma("journal_mode = WAL");
@@ -22,8 +23,8 @@ db.exec(`
     tagline TEXT DEFAULT 'Sewa Peralatan Terlengkap',
     description TEXT,
     logo_url TEXT,
-    primary_color TEXT DEFAULT '#16a34a',
-    secondary_color TEXT DEFAULT '#854d0e',
+    primary_color TEXT DEFAULT '#2f5948',
+    secondary_color TEXT DEFAULT '#c66e46',
     whatsapp TEXT,
     email TEXT,
     address TEXT,
@@ -92,6 +93,34 @@ db.exec(`
     rate_amount REAL,
     subtotal REAL
   );
+
+  CREATE INDEX IF NOT EXISTS idx_inventory_category ON inventory(category_id);
+  CREATE INDEX IF NOT EXISTS idx_inventory_status ON inventory(status);
+  CREATE INDEX IF NOT EXISTS idx_customers_whatsapp ON customers(whatsapp);
+  CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
+  CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+  CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
 `);
+
+// Migrate only the original starter palette; tenant-customized colors stay untouched.
+db.prepare(
+  `
+  UPDATE site_config
+  SET primary_color = '#2f5948', secondary_color = '#c66e46'
+  WHERE primary_color = '#16a34a' AND secondary_color = '#854d0e'
+`,
+).run();
+
+db.prepare(
+  `
+  UPDATE site_config
+  SET tagline = 'Sewa Gear untuk Mendaki & Berkemah',
+      description = 'Perlengkapan hiking dan camping yang terawat untuk perjalanan yang lebih ringan.',
+      hero_title = 'Lebih ringan berangkat. Lebih jauh menjelajah.',
+      hero_subtitle = 'Sewa perlengkapan hiking dan camping yang terawat. Pilih alat, tentukan tanggal, lalu tim kami menyiapkannya untuk perjalananmu.'
+  WHERE hero_title = 'Siap Untuk Petualangan Berikutnya?'
+    AND hero_subtitle = 'Sewa peralatan outdoor premium tanpa ribet. Semua lengkap, semua terawat.'
+`,
+).run();
 
 module.exports = db;

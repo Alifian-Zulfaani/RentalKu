@@ -1,5 +1,9 @@
 <template>
   <div class="dashboard">
+    <AdminPageHeader
+      title="Ringkasan operasional"
+      description="Pantau aktivitas rental dan pekerjaan yang perlu segera ditangani."
+    />
     <div class="stats-row">
       <div class="stat-card glass-card" v-for="(s, i) in statCards" :key="i">
         <div class="stat-card-icon" :style="{ background: s.bg }">
@@ -14,7 +18,7 @@
       </div>
     </div>
     <div class="recent-section glass-card">
-      <div class="section-header">
+      <div class="card-heading">
         <h3>Order Terbaru</h3>
         <router-link to="/admin/orders" class="btn btn-secondary btn-sm"
           >Lihat Semua</router-link
@@ -24,26 +28,26 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>No. Order</th>
-              <th>Customer</th>
-              <th>Status</th>
-              <th>Total</th>
-              <th>Tanggal</th>
+              <th data-align="left">Kode order</th>
+              <th data-align="left">Nama pemesan</th>
+              <th data-align="center">Status</th>
+              <th data-align="right">Total</th>
+              <th data-align="center">Tanggal</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="o in stats.recentOrders" :key="o.id">
-              <td>
+              <td data-align="left">
                 <code>{{ o.order_number }}</code>
               </td>
-              <td>{{ o.customer_name || "-" }}</td>
-              <td>
+              <td data-align="left">{{ o.customer_name || "-" }}</td>
+              <td data-align="center">
                 <span class="badge" :class="'badge-' + statusColor(o.status)">{{
-                  o.status
+                  orderStatusLabel(o.status)
                 }}</span>
               </td>
-              <td>{{ formatRp(o.total_amount) }}</td>
-              <td>{{ formatDate(o.created_at) }}</td>
+              <td data-align="right">{{ formatRp(o.total_amount) }}</td>
+              <td data-align="center">{{ formatDate(o.created_at) }}</td>
             </tr>
             <tr v-if="!stats.recentOrders?.length">
               <td colspan="5" class="text-center text-muted">
@@ -54,11 +58,16 @@
         </table>
       </div>
     </div>
+    <ToastMessage
+      :message="errorMessage"
+      type="error"
+      @close="errorMessage = ''"
+    />
   </div>
 </template>
 
 <script setup>
-import { reactive, onMounted } from "vue";
+import { reactive, ref, onMounted } from "vue";
 import api from "../../services/api";
 import {
   ShoppingCart,
@@ -68,6 +77,14 @@ import {
   AlertTriangle,
   Activity,
 } from "lucide-vue-next";
+import ToastMessage from "../../components/shared/ToastMessage.vue";
+import AdminPageHeader from "../../components/admin/AdminPageHeader.vue";
+import {
+  formatCurrency,
+  formatDate,
+  getApiError,
+  orderStatusLabel,
+} from "../../utils/formatters";
 
 const stats = reactive({
   totalOrders: 0,
@@ -78,62 +95,55 @@ const stats = reactive({
   lateOrders: 0,
   recentOrders: [],
 });
+const errorMessage = ref("");
 
 const statCards = [
   {
     key: "totalOrders",
     label: "Total Order",
     icon: ShoppingCart,
-    color: "#16a34a",
-    bg: "rgba(22,163,74,0.12)",
+    color: "var(--brand-primary)",
+    bg: "color-mix(in srgb, var(--brand-primary) 11%, transparent)",
   },
   {
     key: "activeOrders",
     label: "Order Aktif",
     icon: Activity,
-    color: "#3b82f6",
-    bg: "rgba(59,130,246,0.12)",
+    color: "var(--brand-primary)",
+    bg: "color-mix(in srgb, var(--brand-primary) 11%, transparent)",
   },
   {
     key: "totalInventory",
     label: "Total Barang",
     icon: Package,
-    color: "#8b5cf6",
-    bg: "rgba(139,92,246,0.12)",
+    color: "var(--brand-primary)",
+    bg: "color-mix(in srgb, var(--brand-primary) 11%, transparent)",
   },
   {
     key: "totalCustomers",
     label: "Total Customer",
     icon: Users,
-    color: "#f59e0b",
-    bg: "rgba(245,158,11,0.12)",
+    color: "var(--brand-primary)",
+    bg: "color-mix(in srgb, var(--brand-primary) 11%, transparent)",
   },
   {
     key: "totalRevenue",
     label: "Pendapatan",
     icon: DollarSign,
-    color: "#06b6d4",
-    bg: "rgba(6,182,212,0.12)",
+    color: "var(--brand-primary)",
+    bg: "color-mix(in srgb, var(--brand-primary) 11%, transparent)",
     format: (v) => formatRp(v),
   },
   {
     key: "lateOrders",
     label: "Terlambat",
     icon: AlertTriangle,
-    color: "#ef4444",
-    bg: "rgba(239,68,68,0.12)",
+    color: "#b55243",
+    bg: "rgba(181,82,67,0.12)",
   },
 ];
 
-const formatRp = (v) => "Rp" + (v || 0).toLocaleString("id-ID");
-const formatDate = (d) =>
-  d
-    ? new Date(d).toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    : "-";
+const formatRp = formatCurrency;
 const statusColor = (s) =>
   ({
     booking: "info",
@@ -148,7 +158,10 @@ onMounted(async () => {
     const { data } = await api.get("/orders/stats");
     Object.assign(stats, data);
   } catch (e) {
-    console.error(e);
+    errorMessage.value = getApiError(
+      e,
+      "Ringkasan dashboard belum dapat dimuat.",
+    );
   }
 });
 </script>
@@ -187,7 +200,7 @@ onMounted(async () => {
 .recent-section {
   padding: 24px;
 }
-.section-header {
+.card-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;

@@ -1,10 +1,18 @@
 import { defineStore } from "pinia";
 import api from "../services/api";
 
+const savedAdmin = localStorage.getItem("customer_rentalku_admin");
+let initialAdmin = null;
+try {
+  initialAdmin = savedAdmin ? JSON.parse(savedAdmin) : null;
+} catch {
+  localStorage.removeItem("customer_rentalku_admin");
+}
+
 export const useAuthStore = defineStore("auth", {
   state: () => ({
     token: localStorage.getItem("customer_rentalku_token") || null,
-    admin: JSON.parse(localStorage.getItem("customer_rentalku_admin")) || null,
+    admin: initialAdmin,
   }),
   actions: {
     async login(email, password) {
