@@ -1,76 +1,105 @@
-# Ekosistem Aplikasi Sewa (Rental Platform Ecosystem)
+# RentalKu
 
-Repositori ini menampung arsitektur lengkap dari sebuah ekosistem _Software as a Service_ (SaaS) yang ditujukan untuk manajemen bisnis penyewaan (rental). Ekosistem ini dirancang dengan pendekatan pemisahan (_decoupled_) yang dibagi menjadi dua entitas utama: **Aplikasi Platform Induk** dan **Aplikasi Penyewa (Customer App)**.
+RentalKu adalah ekosistem aplikasi rental yang memisahkan pengelolaan platform dari operasional setiap bisnis rental. Repositori ini berisi dua pasangan aplikasi frontend dan backend yang dapat dijalankan secara mandiri.
 
-Secara keseluruhan, terdapat 4 sub-repositori (direktori) di dalam ekosistem ini. Berikut adalah penjelasan fungsionalitas dan hubungan antar repositori:
+## Aplikasi
 
----
+| Direktori | Peran | Teknologi utama | Port lokal |
+| --- | --- | --- | ---: |
+| [`frontend/`](frontend/) | Situs RentalKu, pendaftaran calon pengguna, dan panel admin platform | Vue 3, Vite, Pinia | `5173` |
+| [`backend/`](backend/) | API autentikasi admin dan pengelolaan subscriber platform | Express, SQLite, JWT | `3000` |
+| [`customer-frontend/`](customer-frontend/) | Situs publik dan panel pengelola untuk satu bisnis rental | Vue 3, Vite, Pinia | `5174` |
+| [`customer-backend/`](customer-backend/) | API katalog, booking, inventaris, pelanggan, order, dan pengaturan toko | Express, SQLite, JWT | `3001` |
 
-## 1. RentalKu Platform (Aplikasi Induk / SaaS)
+## Alur aplikasi
 
-Aplikasi ini adalah platform utama yang ditujukan untuk pemilik sistem (Anda) guna mencari dan memanajemen bisnis-bisnis rental yang ingin berlangganan/menggunakan sistem Anda.
+### Platform RentalKu
 
-### 🏢 `frontend/` (Sisi Klien Platform)
+`frontend` dan `backend` digunakan oleh pengelola RentalKu. Area publik memperkenalkan layanan dan menerima pendaftaran bisnis rental, sedangkan area admin menyediakan ringkasan serta pengelolaan data subscriber. Endpoint admin dilindungi dengan autentikasi JWT.
 
-- **Fungsi**: Bertindak sebagai _Landing Page_ publik untuk memasarkan layanan _Software_ RentalKu kepada pemilik bisnis rental (UMKM), serta menyediakan Panel Admin sentral.
-- **Teknologi**: Vue 3, Vite, Pinia.
-- **Fitur Utama**:
-  - Halaman pendaftaran (_Checkout/Order_) bagi pemilik bisnis rental yang ingin berlangganan.
-  - Halaman _Dashboard Admin_ tempat Anda (pemilik platform) menyetujui, menolak, atau menghapus para pelanggan/penyewa aplikasi (_Subscribers_).
-  - Tampilan moderen dengan sistem _Light/Dark Mode_ dan interaksi modal _anti-alert_.
+### Aplikasi bisnis rental
 
-### ⚙️ `backend/` (API Platform)
+`customer-frontend` dan `customer-backend` merupakan aplikasi operasional untuk satu bisnis rental, dengan contoh identitas **Summit Gear**.
 
-- **Fungsi**: Melayani data dan logika bisnis untuk `frontend/`.
-- **Teknologi**: Node.js, Express.js, SQLite (`better-sqlite3`).
-- **Fitur Utama**:
-  - Menyimpan basis data global (Kredensial Admin Utama dan Data Pendaftar/Subscriber).
-  - Memiliki proteksi JWT untuk rute admin.
-  - Database bersifat independen (`database.sqlite`) dan terisolasi dari data bisnis masing-masing penyewa.
+- Area publik berfokus pada profil bisnis dan katalog alat outdoor.
+- Detail produk ditampilkan melalui modal agar pelanggan dapat memeriksa barang tanpa kehilangan konteks.
+- Pemesanan memakai alur dua langkah: memilih barang dan jumlah, lalu melengkapi data penyewa serta tanggal sewa.
+- Form memiliki validasi per kolom, ringkasan biaya, serta umpan balik error dari API.
+- Panel admin mencakup dashboard, inventaris, pelanggan, order, dan pengaturan web.
+- Tabel admin mendukung pagination, perataan data sesuai jenisnya, label status berbahasa Indonesia, dan aksi yang jelas.
+- Tema terang dan gelap diterapkan konsisten pada konten, header, dan sidebar.
 
----
+Stok booking diproses secara atomik oleh API. Basis data toko terpisah dari basis data platform agar data operasional tenant tidak bercampur dengan data subscriber RentalKu.
 
-## 2. SewaScale / Summit Gear (Aplikasi Bisnis / Penyewa)
+## Menjalankan secara lokal
 
-Aplikasi ini adalah "produk" yang sebenarnya Anda jual/berikan kepada penyewa (UMKM). Aplikasi ini digunakan oleh sang pemilik rental (misal: "Summit Gear") untuk memanajemen operasional tokonya sendiri, serta menjadi etalase (_storefront_) bagi pelanggan akhir mereka.
+Gunakan Node.js versi LTS yang kompatibel dengan dependensi proyek. Pada setiap direktori, instal dependensi dan salin `.env.example` menjadi `.env` sebelum menjalankan aplikasi.
 
-### 🏕️ `customer-frontend/` (Sisi Klien Bisnis)
+Jalankan API platform:
 
-- **Fungsi**: Menjadi situs web toko rental alat (seperti alat _camping_ atau _outdoor_) milik penyewa (klien SaaS Anda).
-- **Teknologi**: Vue 3, Vite, Pinia.
-- **Fitur Utama**:
-  - **Area Publik (Customer)**: Menampilkan katalog peralatan, informasi toko, dan menyediakan Formulir _Booking_ Online bagi pelanggan yang ingin menyewa alat.
-  - **Area Admin (Toko)**: Panel bagi sang pemilik toko rental untuk mengelola operasi bisnis mereka. Dilengkapi fitur CRUD Inventaris (modal _inline_), mengubah status penyewaan (_booking_ -> _active_ -> _completed_), memanajemen daftar pelanggan, dan mengubah pengaturan toko.
-  - Tampilan berbalut UI premium (_Glassmorphism_) dan sistem _Light/Dark Mode_.
+```powershell
+cd backend
+npm install
+Copy-Item .env.example .env
+npm run seed
+npm run dev
+```
 
-### ⚙️ `customer-backend/` (API Bisnis)
+Jalankan frontend platform pada terminal lain:
 
-- **Fungsi**: Sebagai "otak" di balik operasional toko rental tersebut. Terpisah secara fisik dari backend platform induk.
-- **Teknologi**: Node.js, Express.js, SQLite (`better-sqlite3`).
-- **Fitur Utama**:
-  - Menampung basis data (`database.sqlite`) yang spesifik hanya untuk satu toko rental (terdiri dari tabel: _Inventory_, _Orders_, _Categories_, _Customers_, dan _Site Config_).
-  - Menangani kalkulasi sisa stok otomatis, pembacaan paginasi data (_LIMIT OFFSET_), dan penerbitan token JWT khusus untuk pemilik toko (admin toko).
+```powershell
+cd frontend
+npm install
+Copy-Item .env.example .env
+npm run dev
+```
 
----
+Jalankan API bisnis rental:
 
-## Cara Menjalankan Ekosistem Ini Secara Bersamaan
+```powershell
+cd customer-backend
+npm install
+Copy-Item .env.example .env
+npm run seed
+npm run dev
+```
 
-Karena arsitektur ini memisahkan API dan Klien menjadi proyek-proyek mandiri (mikro-layanan sederhana), Anda harus menjalankan masing-masing direktori secara terpisah. Disarankan menggunakan _terminal multi-tab_ atau _Tmux_.
+Jalankan frontend bisnis rental pada terminal lain:
 
-**Langkah Umum:**
+```powershell
+cd customer-frontend
+npm install
+Copy-Item .env.example .env
+npm run dev
+```
 
-1. Masuk ke masing-masing folder (`cd nama-folder`).
-2. Instal pustaka (_dependencies_): `npm install`.
-3. _(Khusus backend)_ Jika butuh data _default_: `npm run seed`.
-4. Jalankan _server lokal_: `npm run dev` (atau `npm start`).
+Setelah seluruh layanan aktif:
 
-**Contoh Alokasi Port (Bawaan):**
+- Platform RentalKu: `http://localhost:5173`
+- API platform: `http://localhost:3000`
+- Situs bisnis rental: `http://localhost:5174`
+- API bisnis rental: `http://localhost:3001`
 
-- **3000** : `backend` (API Platform RentalKu)
-- **3001** : `customer-backend` (API Toko Summit Gear)
-- **5173** : `frontend` (UI Platform RentalKu)
-- **5174** : `customer-frontend` (UI Toko Summit Gear)
+## Verifikasi
 
----
+```powershell
+cd frontend
+npm run build
 
-_Dokumentasi lengkap dan spesifik perihal struktur kode dan cara kerja masing-masing modul dapat dibaca pada file `README.md` yang terdapat di dalam setiap folder._
+cd ../customer-frontend
+npm run build
+
+cd ../customer-backend
+npm test
+```
+
+## Dokumentasi lanjutan
+
+- [Frontend platform](frontend/README.md)
+- [Backend platform](backend/README.md)
+- [Kontrak API platform](backend/docs/api-contract.md)
+- [Frontend bisnis rental](customer-frontend/README.md)
+- [Backend bisnis rental](customer-backend/README.md)
+- [Kontrak API bisnis rental](customer-backend/docs/api-contract.md)
+
+Setiap pasangan frontend dan backend memakai konfigurasi serta basis data masing-masing. Atur `JWT_SECRET`, `CORS_ORIGIN`, alamat API frontend, dan lokasi database sesuai lingkungan sebelum digunakan di produksi.
