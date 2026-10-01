@@ -1,4 +1,4 @@
-const db = require("./db");
+const db = require("../config/database");
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;

@@ -64,6 +64,9 @@ test("slot terisi tidak dapat dibooking dua kali dan kembali tersedia setelah di
     body: JSON.stringify(payload),
   });
   assert.equal(first.status, 201);
+  assert.equal(first.body.data.customer_name, payload.customer_name);
+  assert.equal(first.body.data.service_name, "Portrait personal");
+  assert.equal(first.body.data.professional_name, "Naya Putri");
   assert.equal(
     (
       await request("/public/bookings", {
@@ -81,6 +84,12 @@ test("slot terisi tidak dapat dibooking dua kali dan kembali tersedia setelah di
     }),
   });
   assert.equal(login.status, 200);
+  const filtered = await request("/admin/bookings?search=Ayu", {
+    headers: { Authorization: `Bearer ${login.body.token}` },
+  });
+  assert.equal(filtered.status, 200);
+  assert.equal(filtered.body.pagination.total, 1);
+  assert.equal(filtered.body.data[0].customer_name, "Ayu Lestari");
   const cancelled = await request(
     `/admin/bookings/${first.body.data.id}/status`,
     {
@@ -103,6 +112,15 @@ test("slot terisi tidak dapat dibooking dua kali dan kembali tersedia setelah di
 
 test("validasi pemesan dan akses admin", async () => {
   assert.equal((await request("/admin/bookings")).status, 401);
+  assert.equal(
+    (await request("/admin/login", { method: "POST", body: "{}" })).status,
+    422,
+  );
+  assert.equal((await request("/public/site")).status, 422);
+  assert.equal(
+    (await request("/public/availability?tenant=studio&pro=naya")).status,
+    422,
+  );
   const invalid = await request("/public/bookings", {
     method: "POST",
     body: JSON.stringify({ date: "2020-01-01" }),
@@ -180,6 +198,9 @@ test("harga per fotografer dan akses admin dibatasi sesuai role", async () => {
   });
   assert.equal(login.body.account.role, "photographer");
   const headers = { Authorization: `Bearer ${login.body.token}` };
+  const me = await request("/admin/me", { headers });
+  assert.equal(me.status, 200);
+  assert.equal(me.body.tenant.whatsapp, "6281234567890");
   assert.equal((await request("/admin/services", { headers })).status, 403);
   assert.equal((await request("/admin/accounts", { headers })).status, 403);
   assert.equal(

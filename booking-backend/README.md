@@ -1,25 +1,57 @@
 # RentalKu Booking Backend
 
-API reservasi jasa fotografi untuk satu bisnis. Contoh data awal: **Studio Senja**, dengan profil fotografer Naya dan Arya. Dibangun dengan Express, SQLite (`better-sqlite3`), JWT, dan bcrypt.
+API reservasi jasa berbasis jadwal untuk satu bisnis, dengan **Studio Senja** dan fotografernya sebagai data contoh. Dibangun dengan Express, SQLite (`better-sqlite3`), JWT, dan bcrypt.
 
-## Jalankan lokal
+## Fitur
+
+- Profil studio, fotografer, layanan, paket, dan harga per fotografer.
+- Kalender ketersediaan dari jam kerja, durasi layanan, reservasi aktif, dan blokir admin.
+- Reservasi dalam transaksi SQLite; slot bentrok ditolak dan pembatalan membuka slot kembali.
+- Panel admin dengan role `company` (studio) dan `photographer`; cakupan data diperiksa dari database pada setiap request.
+
+## Menjalankan lokal
 
 ```powershell
 npm install
-Copy-Item .env.example .env
-npm run seed
 npm run dev
 ```
 
-API default: `http://localhost:3002/api`. Seed membuat admin studio `admin@studiosenja.example` / `admin123` dan akun fotografer `naya@studiosenja.example` / `naya123`, `arya@studiosenja.example` / `arya123`. Ganti semua kredensial demo dan `JWT_SECRET` sebelum produksi. Set `DB_PATH` ke path absolut untuk lokasi database lain.
+API berjalan di `http://localhost:3002/api`. Jalankan `booking-frontend/` di port `5175` untuk mengakses situs dan panel admin.
 
-## Model booking
+## Konfigurasi
 
-- Satu tenant mempunyai banyak fotografer dan layanan. Tabel penghubung `professional_services` menentukan paket aktif dan harga masing-masing fotografer; harga reservasi disalin saat transaksi dibuat.
-- Setiap fotografer punya jam kerja mingguan yang ditampilkan pula di landing page pribadinya.
-- Slot tersedia dihitung dari jam kerja, durasi layanan, reservasi aktif, dan waktu yang diblokir admin.
-- Penulisan reservasi berlangsung dalam transaksi SQLite. Slot yang bertabrakan mengembalikan `409`; reservasi dibatalkan membuka slot kembali.
-- Tanggal dan jam disimpan sebagai waktu lokal bisnis (`YYYY-MM-DD` dan `HH:MM`). Atur `BOOKING_TIME_ZONE` sesuai lokasi bisnis.
-- Endpoint admin memakai JWT dan memeriksa role dari database setiap request. Admin studio mengelola seluruh tenant; fotografer hanya dapat mengelola reservasi, profil, paket/harga, jam kerja, dan blokir miliknya. Admin studio dapat membuat akun fotografer dari panel.
+| Variabel | Kegunaan | Default |
+| --- | --- | --- |
+| `PORT` | Port HTTP | `3002` |
+| `JWT_SECRET` | Penanda tangan token admin; wajib di production | Fallback pengembangan |
+| `CORS_ORIGIN` | Origin frontend yang diizinkan, dipisah koma | `http://localhost:5175,http://*.localhost:5175` |
+| `DB_PATH` | Path file SQLite | `database.sqlite` di folder backend |
+| `BOOKING_TIME_ZONE` | Zona waktu bisnis untuk tanggal/jam booking | `Asia/Jakarta` |
 
-Jalankan `npm test` untuk menguji halaman tenant, konflik slot, pembatalan, dan validasi. [Kontrak API lengkap](docs/api-contract.md).
+`.env.example` adalah contoh nilai konfigurasi. Backend ini membaca variabel **dari lingkungan proses**, bukan memuat `.env` otomatis; set variabel melalui shell atau process manager sebelum menjalankan API. Seed membuat kredensial demo yang tercatat di kode seed; ganti semua kata sandi demo dan `JWT_SECRET` sebelum produksi.
+
+## Data awal
+
+Jalankan `npm run seed` untuk mengisi Studio Senja, fotografer Naya dan Arya, layanan, jadwal, serta akun contoh. Seed tidak diperlukan untuk menjalankan API, tetapi halaman contoh memerlukan data tersebut. Kredensial demo ada di kode seed dan harus diganti sebelum produksi.
+
+## Verifikasi
+
+```powershell
+npm test
+```
+
+## Struktur kode
+
+Strukturnya mengikuti backend RentalKu dan Summit Gear:
+
+- `src/config`: konfigurasi environment dan koneksi SQLite.
+- `src/controllers`: handler publik, autentikasi, dan operasional admin.
+- `src/middleware`: autentikasi serta pembatasan role.
+- `src/routes`: pemetaan endpoint publik dan admin.
+- `src/services`: aturan booking, tenant, dan perhitungan ketersediaan.
+- `src/utils`: helper respons dan penanganan error HTTP.
+- `test`: pengujian integrasi kontrak API dan aturan bisnis.
+
+## Dokumentasi
+
+Lihat [kontrak API booking](docs/api-contract.md) untuk format respons, endpoint, role, dan aturan ketersediaan slot. Tanggal dan jam booking disimpan sebagai waktu lokal bisnis (`YYYY-MM-DD`, `HH:MM`).

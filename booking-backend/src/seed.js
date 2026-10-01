@@ -1,5 +1,5 @@
 const bcrypt = require("bcryptjs");
-const db = require("./db");
+const db = require("./config/database");
 
 const tenant = db.prepare("SELECT id FROM tenants WHERE slug = 'studio'").get();
 if (!tenant) {
