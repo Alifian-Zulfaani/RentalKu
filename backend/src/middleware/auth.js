@@ -1,4 +1,6 @@
 const jwt = require("jsonwebtoken");
+const db = require("../config/database");
+const { sendProblem } = require("../utils/http");
 
 const JWT_SECRET =
   process.env.JWT_SECRET ||
@@ -8,26 +10,29 @@ const JWT_SECRET =
 
 function authMiddleware(req, res, next) {
   if (!JWT_SECRET) {
-    return res
-      .status(500)
-      .json({ message: "Konfigurasi autentikasi belum lengkap" });
+    return sendProblem(req, res, 500, "Konfigurasi autentikasi belum lengkap.");
   }
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Token tidak ditemukan" });
+    return sendProblem(req, res, 401, "Silakan masuk sebagai admin terlebih dahulu.");
   }
 
   const token = authHeader.split(" ")[1];
 
+  let decoded;
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.admin = decoded;
-    next();
-  } catch (err) {
-    return res
-      .status(401)
-      .json({ message: "Token tidak valid atau sudah expired" });
+    decoded = jwt.verify(token, JWT_SECRET);
+  } catch {
+    return sendProblem(req, res, 401, "Sesi sudah berakhir. Silakan masuk kembali.");
+  }
+  try {
+    const admin = db.prepare("SELECT id, name, email FROM admins WHERE id = ?").get(decoded.id);
+    if (!admin) return sendProblem(req, res, 401, "Sesi admin tidak lagi berlaku. Silakan masuk kembali.");
+    req.admin = admin;
+    return next();
+  } catch (error) {
+    return next(error);
   }
 }
 

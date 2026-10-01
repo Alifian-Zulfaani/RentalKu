@@ -3,12 +3,13 @@
     <aside
       class="sidebar"
       :class="{ open: mobileOpen, collapsed: sidebarCollapsed }"
+      id="admin-sidebar"
     >
-      <router-link to="/admin/dashboard" class="sidebar-brand"
+      <router-link to="/admin/dashboard" class="sidebar-brand" @click="mobileOpen = false"
         ><span>R.</span
-        ><strong v-if="!sidebarCollapsed">RentalKu</strong></router-link
+        ><strong v-if="showSidebarLabels">RentalKu</strong></router-link
       >
-      <p v-if="!sidebarCollapsed" class="workspace-label">Platform workspace</p>
+      <p v-if="showSidebarLabels" class="workspace-label">Panel platform</p>
       <nav class="sidebar-nav" aria-label="Navigasi admin">
         <router-link
           v-for="item in navItems"
@@ -18,7 +19,7 @@
           @click="mobileOpen = false"
         >
           <component :is="item.icon" :size="19" /><span
-            v-if="!sidebarCollapsed"
+            v-if="showSidebarLabels"
             >{{ item.label }}</span
           >
         </router-link>
@@ -28,11 +29,11 @@
         type="button"
         @click="showLogoutModal = true"
       >
-        <LogOut :size="19" /><span v-if="!sidebarCollapsed">Keluar</span>
+        <LogOut :size="19" /><span v-if="showSidebarLabels">Keluar</span>
       </button>
     </aside>
     <div
-      v-if="mobileOpen"
+      v-if="isCompactViewport && mobileOpen"
       class="mobile-overlay"
       @click="mobileOpen = false"
     ></div>
@@ -43,13 +44,15 @@
           <button
             class="header-icon"
             type="button"
-            aria-label="Buka navigasi"
+            :aria-label="isCompactViewport ? (mobileOpen ? 'Tutup navigasi' : 'Buka navigasi') : (sidebarCollapsed ? 'Perluas navigasi' : 'Ringkas navigasi')"
+            :aria-expanded="isCompactViewport ? mobileOpen : undefined"
+            aria-controls="admin-sidebar"
             @click="toggleSidebar"
           >
             <PanelLeft :size="19" />
           </button>
           <div>
-            <p class="breadcrumb">RentalKu / Platform</p>
+            <p class="breadcrumb">RentalKu / Admin</p>
             <h1>{{ currentPageTitle }}</h1>
           </div>
         </div>
@@ -69,7 +72,7 @@
             <span>{{ adminInitial }}</span>
             <div class="hide-mobile">
               <strong>{{ auth.admin?.name || "Administrator" }}</strong
-              ><small>Platform admin</small>
+              ><small>Administrator</small>
             </div>
           </div>
         </div>
@@ -90,7 +93,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   CalendarDays,
@@ -111,11 +114,15 @@ const auth = useAuthStore();
 const themeStore = useThemeStore();
 const sidebarCollapsed = ref(false);
 const mobileOpen = ref(false);
+const isCompactViewport = ref(window.innerWidth < 1200);
+const showSidebarLabels = computed(
+  () => isCompactViewport.value || !sidebarCollapsed.value,
+);
 const showLogoutModal = ref(false);
 const navItems = [
-  { path: "/admin/dashboard", label: "Overview", icon: LayoutDashboard },
-  { path: "/admin/rental", label: "Customer Rental", icon: Users },
-  { path: "/admin/booking", label: "Customer Booking", icon: CalendarDays },
+  { path: "/admin/dashboard", label: "Ringkasan", icon: LayoutDashboard },
+  { path: "/admin/rental", label: "Pendaftar Rental", icon: Users },
+  { path: "/admin/booking", label: "Pendaftar Booking", icon: CalendarDays },
 ];
 const currentPageTitle = computed(
   () => navItems.find((item) => item.path === route.path)?.label || "Admin",
@@ -128,9 +135,30 @@ const themeLabel = computed(() =>
 );
 
 function toggleSidebar() {
-  if (window.innerWidth < 860) mobileOpen.value = !mobileOpen.value;
+  if (isCompactViewport.value) mobileOpen.value = !mobileOpen.value;
   else sidebarCollapsed.value = !sidebarCollapsed.value;
 }
+function syncViewport() {
+  isCompactViewport.value = window.innerWidth < 1200;
+  if (!isCompactViewport.value) mobileOpen.value = false;
+}
+function onKeydown(event) {
+  if (event.key === "Escape") mobileOpen.value = false;
+}
+watch(() => route.fullPath, () => { mobileOpen.value = false; });
+watch(mobileOpen, (open) => {
+  document.body.style.overflow = open && isCompactViewport.value ? "hidden" : "";
+});
+onMounted(() => {
+  syncViewport();
+  window.addEventListener("resize", syncViewport, { passive: true });
+  window.addEventListener("keydown", onKeydown);
+});
+onBeforeUnmount(() => {
+  document.body.style.overflow = "";
+  window.removeEventListener("resize", syncViewport);
+  window.removeEventListener("keydown", onKeydown);
+});
 function executeLogout() {
   showLogoutModal.value = false;
   auth.logout();
@@ -227,6 +255,7 @@ function executeLogout() {
 }
 .admin-main {
   min-height: 100vh;
+  min-width: 0;
   margin-left: 244px;
   transition: margin-left 0.2s;
 }
@@ -254,6 +283,7 @@ function executeLogout() {
 }
 .header-left {
   gap: 13px;
+  min-width: 0;
 }
 .header-right {
   gap: 15px;
@@ -275,6 +305,7 @@ function executeLogout() {
 .admin-header h1 {
   margin-top: 1px;
   font-size: 1.05rem;
+  overflow-wrap: anywhere;
 }
 .admin-profile {
   gap: 8px;
@@ -309,9 +340,20 @@ function executeLogout() {
 .mobile-overlay {
   display: none;
 }
-@media (max-width: 859px) {
+@media (max-width: 1199px) {
   .sidebar {
+    width: min(280px, calc(100vw - 48px));
     transform: translateX(-100%);
+  }
+  .sidebar.collapsed {
+    width: min(280px, calc(100vw - 48px));
+  }
+  .sidebar.collapsed .sidebar-nav {
+    margin-top: 0;
+  }
+  .sidebar.collapsed .nav-item {
+    justify-content: flex-start;
+    padding: 0 10px;
   }
   .sidebar.open {
     transform: translateX(0);
@@ -332,6 +374,25 @@ function executeLogout() {
   }
   .content-area {
     padding: 20px 16px;
+  }
+}
+@media (max-width: 480px) {
+  .admin-header {
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .header-left,
+  .header-right {
+    gap: 8px;
+  }
+  .breadcrumb {
+    font-size: 0.65rem;
+  }
+  .admin-header h1 {
+    font-size: 0.95rem;
+  }
+  .content-area {
+    padding: 16px 12px 28px;
   }
 }
 </style>

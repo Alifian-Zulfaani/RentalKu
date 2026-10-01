@@ -21,5 +21,5 @@ export const getApiError = (error, fallback = "Terjadi kesalahan. Coba lagi.") =
   const errors = Array.isArray(response?.errors) ? response.errors : [];
   const firstFieldError = errors.find((item) => item?.message);
 
-  return firstFieldError?.message || response?.message || fallback;
+  return firstFieldError?.message || response?.detail || response?.message || fallback;
 };

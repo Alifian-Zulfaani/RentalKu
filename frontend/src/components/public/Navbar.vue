@@ -14,6 +14,7 @@
         <a href="#cara-kerja" @click="closeMenu">Cara kerja</a>
         <a href="#harga" @click="closeMenu">Harga</a>
         <a href="#faq" @click="closeMenu">FAQ</a>
+        <router-link to="/order" class="mobile-cta" @click="closeMenu">Daftar gratis <ArrowUpRight :size="16" /></router-link>
       </nav>
       <div class="nav-actions">
         <button
@@ -25,16 +26,14 @@
           <Sun v-if="themeStore.isDark" :size="18" />
           <Moon v-else :size="18" />
         </button>
-        <router-link to="/admin/login" class="login-link hide-mobile"
-          >Masuk admin</router-link
-        >
-        <router-link to="/order" class="btn btn-primary btn-sm hide-mobile"
+        <router-link to="/order" class="btn btn-primary btn-sm desktop-cta"
           >Daftar gratis <ArrowUpRight :size="16"
         /></router-link>
         <button
-          class="icon-button menu-button hide-desktop"
+          class="icon-button menu-button"
           type="button"
-          aria-label="Buka menu"
+          :aria-label="menuOpen ? 'Tutup menu' : 'Buka menu'"
+          :aria-expanded="menuOpen"
           @click="menuOpen = !menuOpen"
         >
           <Menu v-if="!menuOpen" :size="20" />
@@ -113,8 +112,7 @@ onBeforeUnmount(() => window.removeEventListener("scroll", onScroll));
   font-size: 0.9rem;
   font-weight: 600;
 }
-.nav-links a:hover,
-.login-link:hover {
+.nav-links a:hover {
   color: var(--accent-primary);
 }
 .nav-actions {
@@ -122,11 +120,7 @@ onBeforeUnmount(() => window.removeEventListener("scroll", onScroll));
   align-items: center;
   gap: 12px;
 }
-.login-link {
-  color: var(--text-secondary);
-  font-size: 0.88rem;
-  font-weight: 700;
-}
+.mobile-cta { display: none; }
 .icon-button {
   display: grid;
   width: 34px;
@@ -144,10 +138,11 @@ onBeforeUnmount(() => window.removeEventListener("scroll", onScroll));
 .menu-button {
   display: none;
 }
-@media (max-width: 768px) {
+@media (max-width: 960px) {
   .nav-inner {
     min-height: 62px;
   }
+  .desktop-cta { display: none; }
   .menu-button {
     display: grid;
   }
@@ -171,6 +166,15 @@ onBeforeUnmount(() => window.removeEventListener("scroll", onScroll));
   }
   .nav-links a {
     padding: 12px;
+  }
+  .nav-links .mobile-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4px;
+    border-radius: 5px;
+    background: var(--accent-primary);
+    color: var(--accent-contrast);
   }
 }
 </style>

@@ -1,6 +1,6 @@
-const defaultTitle = "RentalKu | Platform Manajemen Rental untuk Bisnis Indonesia";
+const defaultTitle = "RentalKu | Aplikasi Rental dan Booking untuk Bisnis Indonesia";
 const defaultDescription =
-  "RentalKu membantu bisnis rental mengelola order, inventaris, dan pelanggan dalam satu workspace yang rapi.";
+  "RentalKu membantu bisnis rental dan jasa mengelola pesanan, pelanggan, inventaris, serta jadwal dalam satu ekosistem.";
 
 function setMeta(attribute, key, content) {
   let element = document.head.querySelector(`meta[${attribute}="${key}"]`);

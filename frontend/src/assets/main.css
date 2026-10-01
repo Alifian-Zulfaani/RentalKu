@@ -46,6 +46,10 @@
   --sidebar-logout: #a9483e;
   --sidebar-brand: #08756f;
   --sidebar-brand-text: #ffffff;
+  --floating-action-size: 48px;
+  --floating-action-right: 24px;
+  --floating-action-bottom: 24px;
+  --floating-action-gap: 12px;
 }
 
 [data-theme="dark"] {
@@ -184,6 +188,11 @@ h1, h2, h3, h4 { font-family: var(--font-display); line-height: 1.15; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; }
 
 @media (max-width: 768px) {
+  :root {
+    --floating-action-size: 46px;
+    --floating-action-right: 16px;
+    --floating-action-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
   .container { width: min(100% - 32px, 1180px); }
   .section { padding: 64px 0; }
   .section-title { font-size: 1.75rem; }

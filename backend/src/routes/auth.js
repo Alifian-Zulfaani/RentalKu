@@ -12,7 +12,7 @@ router.post(
     .isEmail()
     .withMessage("Email tidak valid")
     .normalizeEmail(),
-  body("password").isString().notEmpty().withMessage("Password wajib diisi"),
+  body("password").isString().notEmpty().withMessage("Kata sandi wajib diisi"),
   sendValidationErrors,
   authController.login,
 );

@@ -7,7 +7,7 @@ const db = new Database(dbPath);
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
-// RentalKu Company database — only admins & subscribers
+// Platform database: admins and early-access registrations.
 db.exec(`
   CREATE TABLE IF NOT EXISTS admins (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,7 +25,7 @@ db.exec(`
     business_name TEXT,
     business_type TEXT,
     subdomain TEXT,
-    plan TEXT DEFAULT 'lifetime',
+    plan TEXT DEFAULT 'early_access',
     payment_method TEXT,
     amount REAL DEFAULT 0,
     status TEXT DEFAULT 'pending' CHECK(status IN ('pending','confirmed','rejected')),

@@ -2,17 +2,16 @@
   <div class="dashboard-page">
     <section class="page-intro">
       <div>
-        <p class="page-kicker">Ringkasan platform</p>
-        <h2>Prioritas Anda hari ini</h2>
+        <p class="page-kicker">Ringkasan pendaftaran</p>
+        <h2>Pendaftaran terbaru</h2>
         <p>
-          Review pendaftaran baru dan pantau pertumbuhan subscriber di satu
-          tempat.
+          Pantau pendaftar Rental dan Booking, lalu tindak lanjuti yang masih menunggu.
         </p>
       </div>
       <router-link
         to="/admin/rental"
         class="btn btn-primary"
-        >Customer Rental <ArrowRight :size="17"
+        >Lihat Rental <ArrowRight :size="17"
       /></router-link>
     </section>
 
@@ -32,35 +31,34 @@
     </div>
 
     <div class="product-overview">
-      <router-link to="/admin/rental" class="product-overview-card"><span>APLIKASI RENTAL</span><strong>{{ stats.byProduct?.rental?.total || 0 }} customer</strong><small>{{ stats.byProduct?.rental?.pending || 0 }} menunggu review</small><ArrowUpRight :size="18" /></router-link>
-      <router-link to="/admin/booking" class="product-overview-card"><span>APLIKASI BOOKING</span><strong>{{ stats.byProduct?.booking?.total || 0 }} customer</strong><small>{{ stats.byProduct?.booking?.pending || 0 }} menunggu review</small><ArrowUpRight :size="18" /></router-link>
+      <router-link to="/admin/rental" class="product-overview-card"><span>APLIKASI RENTAL</span><strong>{{ stats.byProduct?.rental?.total || 0 }} pendaftar</strong><small>{{ stats.byProduct?.rental?.pending || 0 }} perlu ditinjau</small><ArrowUpRight :size="18" /></router-link>
+      <router-link to="/admin/booking" class="product-overview-card"><span>APLIKASI BOOKING</span><strong>{{ stats.byProduct?.booking?.total || 0 }} pendaftar</strong><small>{{ stats.byProduct?.booking?.pending || 0 }} perlu ditinjau</small><ArrowUpRight :size="18" /></router-link>
     </div>
 
     <section class="attention-panel">
       <div class="attention-copy">
         <span class="attention-icon"><Clock3 :size="20" /></span>
         <div>
-          <strong>{{ stats.pending }} pendaftaran menunggu keputusan</strong>
+          <strong>{{ stats.pending }} pendaftaran perlu ditinjau</strong>
           <p>
-            Setiap persetujuan membuat bisnis siap masuk ke proses
-            onboarding.
+            Periksa detail bisnis sebelum mengambil keputusan.
           </p>
         </div>
       </div>
       <div class="attention-actions">
-        <router-link to="/admin/rental?status=pending" class="btn btn-secondary btn-sm">Tinjau Rental</router-link>
-        <router-link to="/admin/booking?status=pending" class="btn btn-secondary btn-sm">Tinjau Booking</router-link>
+        <router-link to="/admin/rental?status=pending" class="btn btn-secondary btn-sm">Lihat Rental</router-link>
+        <router-link to="/admin/booking?status=pending" class="btn btn-secondary btn-sm">Lihat Booking</router-link>
       </div>
     </section>
 
     <section class="recent-panel">
       <div class="panel-header">
         <div>
-          <h3>Subscriber terbaru</h3>
-          <p>Pendaftaran terakhir yang masuk ke platform.</p>
+          <h3>Pendaftar terbaru</h3>
+          <p>Lima pendaftaran terakhir.</p>
         </div>
         <router-link to="/admin/booking" class="panel-link"
-          >Customer Booking <ArrowUpRight :size="16"
+          >Lihat Booking <ArrowUpRight :size="16"
         /></router-link>
       </div>
       <div class="table-wrap">
@@ -69,9 +67,9 @@
             <tr>
               <th>Bisnis & pemilik</th>
               <th>Produk</th>
-              <th>Metode</th>
-              <th class="align-right">Nilai</th>
-              <th>Status</th>
+              <th>Akses</th>
+              <th class="align-right">Biaya</th>
+              <th class="align-center">Status</th>
               <th>Tanggal daftar</th>
             </tr>
           </thead>
@@ -79,34 +77,33 @@
             <tr
               v-for="subscriber in stats.recentSubscribers"
               :key="subscriber.id"
+              class="data-row"
             >
-              <td>
+              <td data-label="Bisnis & pemilik">
                 <strong>{{
                   subscriber.business_name || subscriber.name
                 }}</strong
                 ><small>{{ subscriber.name }} · {{ subscriber.email }}</small>
               </td>
-              <td>{{ subscriber.product_type === "booking" ? "Booking" : "Rental" }}</td>
-              <td>
-                <span class="method-label">{{
-                  subscriber.payment_method || "-"
-                }}</span>
+              <td data-label="Produk">{{ subscriber.product_type === "booking" ? "Booking" : "Rental" }}</td>
+              <td data-label="Akses">
+                <span class="method-label">Early access</span>
               </td>
-              <td class="align-right">
+              <td class="align-right" data-label="Biaya">
                 {{ formatCurrency(subscriber.amount) }}
               </td>
-              <td>
+              <td class="align-center" data-label="Status">
                 <span
                   class="badge"
                   :class="`badge-${statusTone(subscriber.status)}`"
                   >{{ statusLabel(subscriber.status) }}</span
                 >
               </td>
-              <td>{{ formatDate(subscriber.created_at) }}</td>
+              <td data-label="Tanggal daftar">{{ formatDate(subscriber.created_at) }}</td>
             </tr>
             <tr v-if="!stats.recentSubscribers.length">
               <td colspan="6" class="empty-state">
-                Belum ada subscriber yang terdaftar.
+                Belum ada pendaftaran.
               </td>
             </tr>
           </tbody>
@@ -123,8 +120,8 @@ import {
   ArrowRight,
   ArrowUpRight,
   Clock3,
-  DollarSign,
   UserCheck,
+  UserX,
   Users,
 } from "lucide-vue-next";
 import api from "../../services/api";
@@ -140,7 +137,6 @@ const stats = reactive({
   confirmed: 0,
   pending: 0,
   rejected: 0,
-  totalRevenue: 0,
   recentSubscribers: [],
   byProduct: { rental: { total: 0, pending: 0 }, booking: { total: 0, pending: 0 } },
 });
@@ -148,45 +144,44 @@ const error = ref("");
 const statCards = [
   {
     key: "totalSubscribers",
-    label: "Total subscriber",
-    note: "seluruh pendaftar",
+    label: "Total pendaftar",
+    note: "Rental dan Booking",
     icon: Users,
     tone: "teal",
   },
   {
     key: "confirmed",
-    label: "Subscriber aktif",
-    note: "sudah dikonfirmasi",
+    label: "Disetujui",
+    note: "sudah disetujui",
     icon: UserCheck,
     tone: "green",
   },
   {
     key: "pending",
-    label: "Menunggu review",
-    note: "butuh keputusan",
+    label: "Perlu ditinjau",
+    note: "belum diputuskan",
     icon: Clock3,
     tone: "amber",
   },
   {
-    key: "totalRevenue",
-    label: "Pendapatan tercatat",
-    note: "dari subscriber aktif",
-    icon: DollarSign,
+    key: "rejected",
+    label: "Ditolak",
+    note: "pendaftaran ditutup",
+    icon: UserX,
     tone: "coral",
-    format: formatCurrency,
   },
 ];
 const statusTone = (status) =>
   ({ pending: "warning", confirmed: "success", rejected: "danger" })[status] ||
   "default";
 const statusLabel = (status) =>
-  ({ pending: "Menunggu", confirmed: "Aktif", rejected: "Ditolak" })[status] ||
+  ({ pending: "Menunggu", confirmed: "Disetujui", rejected: "Ditolak" })[status] ||
   status;
 
 onMounted(async () => {
   try {
     const { data } = await api.get("/subscribers/stats");
-    Object.assign(stats, data);
+    Object.assign(stats, data.data);
   } catch (requestError) {
     error.value = getApiError(
       requestError,
@@ -238,6 +233,7 @@ onMounted(async () => {
   margin-top: 7px;
   color: var(--text-secondary);
 }
+.page-intro .btn { flex: 0 0 auto; white-space: nowrap; }
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -385,6 +381,9 @@ td small {
 .align-right {
   text-align: right;
 }
+.align-center {
+  text-align: center;
+}
 .method-label {
   color: var(--text-secondary);
   text-transform: capitalize;
@@ -407,15 +406,51 @@ td small {
   .page-intro .btn {
     width: 100%;
   }
-  .metric-grid {
-    grid-template-columns: 1fr;
-  }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .metric-card {
     min-height: auto;
+    padding: 15px;
   }
   .panel-header {
     align-items: flex-start;
     flex-direction: column;
   }
+  .page-intro,
+  .attention-panel { padding: 18px; }
+}
+@media (max-width: 820px) {
+  .table-wrap { overflow: visible; }
+  table { min-width: 0; }
+  thead { display: none; }
+  tbody { display: grid; gap: 10px; padding: 12px; }
+  tr.data-row { display: grid; padding: 7px 13px; border: 1px solid var(--border-color); border-radius: 6px; }
+  tr.data-row td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 9px 0;
+    border-top: 0;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  tr.data-row td + td { border-top: 1px solid var(--border-color); }
+  tr.data-row td::before {
+    content: attr(data-label);
+    flex: 0 0 40%;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-align: left;
+    text-transform: uppercase;
+  }
+  tr.data-row td:first-child { display: block; text-align: left; }
+  tr.data-row td:first-child::before { display: block; margin-bottom: 5px; }
+  tbody > tr:not(.data-row),
+  tbody > tr:not(.data-row) > td { display: block; width: 100%; }
+  .empty-state { padding: 28px 12px; }
+}
+@media (max-width: 400px) {
+  .metric-grid { grid-template-columns: 1fr; }
 }
 </style>

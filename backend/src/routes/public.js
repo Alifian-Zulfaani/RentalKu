@@ -30,14 +30,6 @@ router.post(
   body("product_type")
     .isIn(["rental", "booking"])
     .withMessage("Pilih produk Rental atau Booking"),
-  body("plan")
-    .optional()
-    .equals("lifetime")
-    .withMessage("Paket tidak tersedia"),
-  body("payment_method")
-    .optional()
-    .isIn(["transfer", "qris", "free"])
-    .withMessage("Metode pembayaran tidak valid"),
   sendValidationErrors,
   publicController.checkout,
 );

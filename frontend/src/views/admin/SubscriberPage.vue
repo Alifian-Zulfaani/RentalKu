@@ -2,12 +2,9 @@
   <div class="subscriber-page">
     <section class="page-intro">
       <div>
-        <p class="page-kicker">{{ productLabel }} · Manajemen subscriber</p>
-        <h2>Customer {{ productLabel }}</h2>
-        <p>
-          Konfirmasi akses, tolak pendaftaran yang belum sesuai, atau rapikan
-          data yang sudah selesai.
-        </p>
+        <p class="page-kicker">RentalKu {{ productLabel }}</p>
+        <h2>Pendaftar {{ productLabel }}</h2>
+        <p>Tinjau bisnis yang mendaftar dan perbarui status pendaftarannya.</p>
       </div>
       <span class="total-count">{{ pagination.total }} total</span>
     </section>
@@ -20,13 +17,13 @@
             placeholder="Cari bisnis, nama, atau email" /></label
         ><select v-model="filterStatus" class="status-select">
           <option value="">Semua status</option>
-          <option value="pending">Menunggu review</option>
-          <option value="confirmed">Aktif</option>
+          <option value="pending">Perlu ditinjau</option>
+          <option value="confirmed">Disetujui</option>
           <option value="rejected">Ditolak</option>
         </select>
       </div>
       <div v-if="loading" class="loading-state">
-        <LoaderCircle :size="20" /> Memuat subscriber...
+        <LoaderCircle :size="20" /> Memuat pendaftar...
       </div>
       <div v-else class="table-wrap">
         <table>
@@ -35,52 +32,49 @@
               <th>Bisnis</th>
               <th>Pemilik</th>
               <th>Kontak</th>
-              <th>Metode</th>
-              <th>Status</th>
-              <th>Aksi</th>
+              <th class="align-right">Biaya</th>
+              <th class="align-center">Status</th>
+              <th class="align-center">Aksi</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="subscriber in subscribers" :key="subscriber.id">
-              <td>
+            <tr v-for="subscriber in subscribers" :key="subscriber.id" class="data-row">
+              <td data-label="Bisnis">
                 <strong>{{ subscriber.business_name || "Belum diisi" }}</strong
                 ><small>{{
                   subscriber.business_type || "Jenis bisnis belum diisi"
                 }}</small>
               </td>
-              <td>
+              <td data-label="Pemilik">
                 <strong>{{ subscriber.name }}</strong
                 ><small>{{ subscriber.email }}</small>
               </td>
-              <td>{{ subscriber.whatsapp }}</td>
-              <td>
+              <td data-label="Kontak">{{ subscriber.whatsapp }}</td>
+              <td class="align-right" data-label="Biaya">
                 <strong>{{ formatCurrency(subscriber.amount) }}</strong
-                ><small
-                  >{{ subscriber.payment_method }} ·
-                  {{ subscriber.plan }}</small
-                >
+                ><small>Early access</small>
               </td>
-              <td>
+              <td class="align-center" data-label="Status">
                 <span
                   class="badge"
                   :class="`badge-${statusTone(subscriber.status)}`"
                   >{{ statusLabel(subscriber.status) }}</span
                 >
               </td>
-              <td class="actions">
+              <td class="actions" data-label="Aksi">
                 <button
                   v-if="subscriber.status === 'pending'"
                   class="action-button approve"
                   type="button"
-                  title="Konfirmasi subscriber"
+                  title="Setujui pendaftaran"
                   @click="openStatusModal(subscriber, 'confirmed')"
                 >
-                  <Check :size="17" /> Konfirmasi</button
+                  <Check :size="17" /> Setujui</button
                 ><button
                   v-if="subscriber.status === 'pending'"
                   class="action-button reject"
                   type="button"
-                  title="Tolak subscriber"
+                  title="Tolak pendaftaran"
                   @click="openStatusModal(subscriber, 'rejected')"
                 >
                   <X :size="17" /> Tolak</button
@@ -95,7 +89,7 @@
                   v-if="subscriber.status !== 'pending'"
                   class="action-button delete"
                   type="button"
-                  title="Hapus subscriber"
+                  title="Hapus pendaftar"
                   @click="openDeleteModal(subscriber)"
                 >
                   <Trash2 :size="16" /> Hapus
@@ -105,10 +99,10 @@
             <tr v-if="!subscribers.length">
               <td colspan="6">
                 <div class="empty-state">
-                  <Inbox :size="27" /><strong>Belum ada subscriber</strong
+                  <Inbox :size="27" /><strong>Belum ada pendaftar</strong
                   ><span
-                    >Data pendaftaran bisnis akan tampil di sini setelah ada
-                    order masuk.</span
+                    >Pendaftaran bisnis akan tampil di sini setelah formulir
+                    dikirim.</span
                   >
                 </div>
               </td>
@@ -129,8 +123,8 @@
             }}</button
           ><span v-if="pagination.total"
             >Menampilkan {{ rangeStart }}-{{ rangeEnd }} dari
-            {{ pagination.total }} subscriber</span
-          ><span v-else>Belum ada subscriber</span>
+            {{ pagination.total }} pendaftar</span
+          ><span v-else>Belum ada pendaftar</span>
         </div>
         <div v-if="pagination.total > 0" class="page-controls">
           <button
@@ -141,7 +135,9 @@
             @click="changePage(pagination.page - 1)"
           >
             <ChevronLeft :size="17" /></button
-          ><template v-for="item in pageItems" :key="item"
+          ><template
+            v-for="(item, index) in pageItems"
+            :key="`${item}-${index}`"
             ><span v-if="item === 'ellipsis'" class="page-ellipsis">...</span
             ><button
               v-else
@@ -211,12 +207,16 @@ import { formatCurrency, getApiError } from "../../utils/formatters";
 
 const subscribers = ref([]);
 const route = useRoute();
-const productType = computed(() => route.path.endsWith("/booking") ? "booking" : "rental");
-const productLabel = computed(() => productType.value === "booking" ? "Booking" : "Rental");
+const productType = computed(() =>
+  route.path.endsWith("/booking") ? "booking" : "rental",
+);
+const productLabel = computed(() =>
+  productType.value === "booking" ? "Booking" : "Rental",
+);
 const loading = ref(false);
 const search = ref("");
 const filterStatus = ref(route.query.status || "");
-const pagination = reactive({ page: 1, total: 0, totalPages: 1 });
+const pagination = reactive({ page: 1, limit: 10, total: 0, totalPages: 1 });
 const toast = reactive({ message: "", type: "success" });
 const modal = reactive({
   open: false,
@@ -229,12 +229,14 @@ const modal = reactive({
   confirmClass: "btn-primary",
 });
 let searchTimer;
+let requestId = 0;
 const statusTone = (status) =>
   ({ pending: "warning", confirmed: "success", rejected: "danger" })[status] ||
   "default";
 const statusLabel = (status) =>
-  ({ pending: "Menunggu", confirmed: "Aktif", rejected: "Ditolak" })[status] ||
-  status;
+  ({ pending: "Menunggu", confirmed: "Disetujui", rejected: "Ditolak" })[
+    status
+  ] || status;
 const rangeStart = computed(() =>
   pagination.total ? (pagination.page - 1) * pagination.limit + 1 : 0,
 );
@@ -252,6 +254,7 @@ const pageItems = computed(() => {
 });
 
 async function fetchSubscribers() {
+  const currentRequest = ++requestId;
   loading.value = true;
   try {
     const params = { page: pagination.page, limit: 10 };
@@ -259,15 +262,14 @@ async function fetchSubscribers() {
     if (filterStatus.value) params.status = filterStatus.value;
     params.product_type = productType.value;
     const { data } = await api.get("/subscribers", { params });
+    if (currentRequest !== requestId) return;
     subscribers.value = data.data;
-    Object.assign(pagination, data.pagination);
+    Object.assign(pagination, data.meta.pagination);
   } catch (error) {
-    showToast(
-      getApiError(error, "Data subscriber belum bisa dimuat."),
-      "error",
-    );
+    if (currentRequest !== requestId) return;
+    showToast(getApiError(error, "Data pendaftar belum bisa dimuat."), "error");
   } finally {
-    loading.value = false;
+    if (currentRequest === requestId) loading.value = false;
   }
 }
 function showToast(message, type = "success") {
@@ -276,7 +278,7 @@ function showToast(message, type = "success") {
 }
 function openStatusModal(subscriber, status) {
   const labels = {
-    confirmed: "Konfirmasi",
+    confirmed: "Setujui",
     rejected: "Tolak",
     pending: "Tinjau ulang",
   };
@@ -287,8 +289,10 @@ function openStatusModal(subscriber, status) {
   modal.title = `${labels[status]} ${subscriber.business_name || subscriber.name}?`;
   modal.message =
     status === "confirmed"
-      ? "Akses bisnis ini akan ditandai sebagai aktif."
-      : "Status pendaftaran akan diperbarui.";
+      ? "Pendaftaran ini akan ditandai disetujui. Aktivasi aplikasi dilakukan terpisah."
+      : status === "rejected"
+        ? "Pendaftaran ini akan ditolak."
+        : "Pendaftaran ini akan kembali ke daftar yang perlu ditinjau.";
   modal.confirmText = labels[status];
   modal.confirmClass = status === "rejected" ? "btn-danger" : "btn-primary";
 }
@@ -297,7 +301,7 @@ function openDeleteModal(subscriber) {
   modal.type = "delete";
   modal.subscriber = subscriber;
   modal.title = `Hapus ${subscriber.business_name || subscriber.name}?`;
-  modal.message = "Data subscriber akan dihapus permanen dari platform.";
+  modal.message = "Data pendaftaran ini akan dihapus permanen dari platform.";
   modal.confirmText = "Hapus";
   modal.confirmClass = "btn-danger";
 }
@@ -312,10 +316,14 @@ async function performAction() {
     else await api.delete(`/subscribers/${subscriber.id}`);
     showToast(
       type === "delete"
-        ? "Subscriber berhasil dihapus."
-        : "Status subscriber berhasil diperbarui.",
+        ? "Data pendaftar dihapus."
+        : "Status pendaftaran diperbarui.",
     );
     await fetchSubscribers();
+    if (pagination.page > pagination.totalPages) {
+      pagination.page = pagination.totalPages;
+      await fetchSubscribers();
+    }
   } catch (error) {
     showToast(getApiError(error), "error");
   }
@@ -342,12 +350,14 @@ watch(filterStatus, () => {
 });
 onMounted(fetchSubscribers);
 watch(productType, () => {
+  clearTimeout(searchTimer);
   pagination.page = 1;
-  search.value = "";
-  filterStatus.value = "";
   fetchSubscribers();
 });
-onBeforeUnmount(() => clearTimeout(searchTimer));
+onBeforeUnmount(() => {
+  clearTimeout(searchTimer);
+  requestId += 1;
+});
 </script>
 
 <style scoped>
@@ -479,6 +489,12 @@ th {
   text-align: left;
   text-transform: uppercase;
 }
+.align-right {
+  text-align: right;
+}
+.align-center {
+  text-align: center;
+}
 td {
   padding: 13px 16px;
   border-top: 1px solid var(--border-color);
@@ -499,10 +515,11 @@ td small {
   font-size: 0.71rem;
 }
 .actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
+  text-align: center;
+  white-space: nowrap;
+}
+.actions > button + button {
+  margin-left: 6px;
 }
 .action-button {
   display: inline-flex;
@@ -626,5 +643,47 @@ td small {
     justify-content: center;
     flex-wrap: wrap;
   }
+}
+@media (max-width: 960px) {
+  .pagination { flex-wrap: wrap; }
+  .pagination-info { flex-wrap: wrap; }
+}
+@media (max-width: 960px) {
+  .table-wrap { overflow: visible; }
+  table { min-width: 0; }
+  thead { display: none; }
+  tbody { display: grid; gap: 10px; padding: 12px; }
+  tr.data-row { display: grid; padding: 7px 13px; border: 1px solid var(--border-color); border-radius: 6px; }
+  tr.data-row td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 9px 0;
+    border-top: 0;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  tr.data-row td + td { border-top: 1px solid var(--border-color); }
+  tr.data-row td::before {
+    content: attr(data-label);
+    flex: 0 0 32%;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-align: left;
+    text-transform: uppercase;
+  }
+  tr.data-row td:first-child,
+  tr.data-row td:nth-child(2) { display: block; text-align: left; }
+  tr.data-row td:first-child::before,
+  tr.data-row td:nth-child(2)::before { display: block; margin-bottom: 5px; }
+  tr.data-row td.actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; text-align: left; white-space: normal; }
+  tr.data-row td.actions::before { flex-basis: 100%; }
+  .actions > button + button { margin-left: 0; }
+  tbody > tr:not(.data-row),
+  tbody > tr:not(.data-row) > td { display: block; width: 100%; }
+  .empty-state { min-height: 180px; padding: 18px; }
+  .pagination { justify-content: center; }
 }
 </style>

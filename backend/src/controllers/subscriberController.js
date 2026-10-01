@@ -1,78 +1,66 @@
 const db = require("../config/database");
-const { logServerError } = require("../utils/http");
+const { sendProblem, sendServerError } = require("../utils/http");
+const { serializeSubscriber } = require("../utils/subscriber");
+
+const subscriberColumns = `id, name, email, whatsapp, business_name, business_type,
+  product_type, subdomain, plan, payment_method, amount, status, confirmed_at,
+  notes, created_at`;
+const findSubscriber = db.prepare(`SELECT ${subscriberColumns} FROM subscribers WHERE id = ?`);
 
 exports.getAll = (req, res) => {
   try {
     const { search, status, product_type } = req.query;
     const page = Number(req.query.page || 1);
     const limit = Number(req.query.limit || 10);
-    let query = `SELECT id, name, email, whatsapp, business_name, business_type, product_type, subdomain, plan, payment_method, amount, status, confirmed_at, notes, created_at FROM subscribers WHERE 1=1`;
+    let filters = " WHERE 1=1";
     const params = [];
 
     if (search) {
-      query += ` AND (name LIKE ? OR email LIKE ? OR business_name LIKE ?)`;
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      filters += " AND (name LIKE ? ESCAPE '\\' OR email LIKE ? ESCAPE '\\' OR business_name LIKE ? ESCAPE '\\')";
+      const term = `%${search.replace(/[\\%_]/g, "\\$&")}%`;
+      params.push(term, term, term);
     }
     if (status) {
-      query += ` AND status = ?`;
+      filters += " AND status = ?";
       params.push(status);
     }
     if (product_type) {
-      query += ` AND product_type = ?`;
+      filters += " AND product_type = ?";
       params.push(product_type);
     }
 
-    const countQuery = query.replace(
-      /SELECT .+? FROM/,
-      "SELECT COUNT(*) as total FROM",
-    );
-    const { total } = db.prepare(countQuery).get(...params);
+    const { total } = db.prepare(`SELECT COUNT(*) AS total FROM subscribers${filters}`).get(...params);
 
     const offset = (page - 1) * limit;
-    query += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
-    params.push(Number(limit), offset);
-
-    const items = db.prepare(query).all(...params);
+    const items = db.prepare(`
+      SELECT ${subscriberColumns}
+      FROM subscribers${filters} ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?
+    `).all(...params, limit, offset).map(serializeSubscriber);
 
     res.json({
       data: items,
-      pagination: {
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        totalPages: Math.ceil(total / limit),
-      },
+      meta: { pagination: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) } },
     });
   } catch (err) {
-    logServerError("subscribers.getAll", err);
-    res.status(500).json({ message: "Terjadi kesalahan pada server" });
+    return sendServerError(req, res, "subscribers.getAll", err);
   }
 };
 
 exports.getById = (req, res) => {
   try {
-    const sub = db
-      .prepare(
-        "SELECT id, name, email, whatsapp, business_name, business_type, product_type, subdomain, plan, payment_method, amount, status, confirmed_at, notes, created_at FROM subscribers WHERE id = ?",
-      )
-      .get(req.params.id);
-    if (!sub)
-      return res.status(404).json({ message: "Subscriber tidak ditemukan" });
-    res.json(sub);
+    const sub = findSubscriber.get(req.params.id);
+    if (!sub) return sendProblem(req, res, 404, "Pendaftar tidak ditemukan.");
+    res.json({ data: serializeSubscriber(sub) });
   } catch (err) {
-    logServerError("subscribers.getById", err);
-    res.status(500).json({ message: "Terjadi kesalahan pada server" });
+    return sendServerError(req, res, "subscribers.getById", err);
   }
 };
 
 exports.updateStatus = (req, res) => {
   try {
     const { status, notes } = req.body;
-    const sub = db
-      .prepare("SELECT * FROM subscribers WHERE id = ?")
-      .get(req.params.id);
-    if (!sub)
-      return res.status(404).json({ message: "Subscriber tidak ditemukan" });
+    const sub = findSubscriber.get(req.params.id);
+    if (!sub) return sendProblem(req, res, 404, "Pendaftar tidak ditemukan.");
 
     const confirmedAt =
       status === "confirmed"
@@ -87,81 +75,60 @@ exports.updateStatus = (req, res) => {
       req.params.id,
     );
 
-    res.json({ message: `Subscriber berhasil di-${status}` });
+    const updated = findSubscriber.get(req.params.id);
+    res.json({
+      message: ({ pending: "Pendaftaran siap ditinjau kembali.", confirmed: "Pendaftaran disetujui.", rejected: "Pendaftaran ditolak." })[status],
+      data: serializeSubscriber(updated),
+    });
   } catch (err) {
-    logServerError("subscribers.updateStatus", err);
-    res.status(500).json({ message: "Terjadi kesalahan pada server" });
+    return sendServerError(req, res, "subscribers.updateStatus", err);
   }
 };
 
 exports.delete = (req, res) => {
   try {
-    const sub = db
-      .prepare("SELECT * FROM subscribers WHERE id = ?")
-      .get(req.params.id);
-    if (!sub)
-      return res.status(404).json({ message: "Subscriber tidak ditemukan" });
-    db.prepare("DELETE FROM subscribers WHERE id = ?").run(req.params.id);
-    res.json({ message: "Subscriber berhasil dihapus" });
+    const result = db.prepare("DELETE FROM subscribers WHERE id = ?").run(req.params.id);
+    if (!result.changes) return sendProblem(req, res, 404, "Pendaftar tidak ditemukan.");
+    res.status(204).end();
   } catch (err) {
-    logServerError("subscribers.delete", err);
-    res.status(500).json({ message: "Terjadi kesalahan pada server" });
+    return sendServerError(req, res, "subscribers.delete", err);
   }
 };
 
 exports.getStats = (req, res) => {
   try {
-    const totalSubscribers = db
-      .prepare("SELECT COUNT(*) as count FROM subscribers")
-      .get().count;
-    const confirmed = db
-      .prepare(
-        "SELECT COUNT(*) as count FROM subscribers WHERE status = 'confirmed'",
-      )
-      .get().count;
-    const pending = db
-      .prepare(
-        "SELECT COUNT(*) as count FROM subscribers WHERE status = 'pending'",
-      )
-      .get().count;
-    const rejected = db
-      .prepare(
-        "SELECT COUNT(*) as count FROM subscribers WHERE status = 'rejected'",
-      )
-      .get().count;
-    const totalRevenue = db
-      .prepare(
-        "SELECT COALESCE(SUM(amount), 0) as total FROM subscribers WHERE status = 'confirmed'",
-      )
-      .get().total;
-
+    const { totalSubscribers, confirmed, pending, rejected } = db.prepare(`
+      SELECT COUNT(*) AS totalSubscribers,
+        COALESCE(SUM(status = 'confirmed'), 0) AS confirmed,
+        COALESCE(SUM(status = 'pending'), 0) AS pending,
+        COALESCE(SUM(status = 'rejected'), 0) AS rejected
+      FROM subscribers
+    `).get();
     const recentSubscribers = db
       .prepare(
         `
       SELECT id, name, email, business_name, product_type, plan, payment_method, amount, status, created_at
-      FROM subscribers ORDER BY created_at DESC LIMIT 5
+      FROM subscribers ORDER BY created_at DESC, id DESC LIMIT 5
     `,
       )
-      .all();
+      .all().map(serializeSubscriber);
 
     const byProduct = Object.fromEntries(
       ["rental", "booking"].map((type) => [
         type,
-        db.prepare("SELECT COUNT(*) AS total, SUM(status = 'pending') AS pending, SUM(status = 'confirmed') AS confirmed FROM subscribers WHERE product_type = ?").get(type),
+        db.prepare("SELECT COUNT(*) AS total, COALESCE(SUM(status = 'pending'), 0) AS pending, COALESCE(SUM(status = 'confirmed'), 0) AS confirmed FROM subscribers WHERE product_type = ?").get(type),
       ]),
     );
 
-    res.json({
+    res.json({ data: {
       totalSubscribers,
       confirmed,
       pending,
       rejected,
-      totalRevenue,
       recentSubscribers,
       byProduct,
-    });
+    } });
   } catch (err) {
-    logServerError("subscribers.getStats", err);
-    res.status(500).json({ message: "Terjadi kesalahan pada server" });
+    return sendServerError(req, res, "subscribers.getStats", err);
   }
 };

@@ -7,25 +7,25 @@
     aria-label="Chat WhatsApp untuk bertanya tentang RentalKu"
     title="Tanya lewat WhatsApp"
   >
-    <MessageCircle :size="23" />
+    <WhatsAppIcon class="contact-icon" />
   </a>
 </template>
 
 <script setup>
-import { MessageCircle } from "lucide-vue-next";
+import WhatsAppIcon from "../shared/WhatsAppIcon.vue";
 
-const contactUrl = `https://wa.me/6285740636055?text=${encodeURIComponent("Halo Kak Alifian, saya ingin bertanya tentang RentalKu.")}`;
+const contactUrl = `https://wa.me/6285740636055?text=${encodeURIComponent("Halo tim RentalKu, saya ingin bertanya tentang aplikasi Rental dan Booking.")}`;
 </script>
 
 <style scoped>
 .whatsapp-contact {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
+  right: var(--floating-action-right);
+  bottom: var(--floating-action-bottom);
   z-index: 90;
   display: grid;
-  width: 48px;
-  height: 48px;
+  width: var(--floating-action-size);
+  height: var(--floating-action-size);
   place-items: center;
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 50%;
@@ -37,6 +37,7 @@ const contactUrl = `https://wa.me/6285740636055?text=${encodeURIComponent("Halo 
     transform 0.16s ease,
     box-shadow 0.16s ease;
 }
+.contact-icon { font-size: 24px; }
 
 .whatsapp-contact:hover {
   background: #188756;
@@ -49,12 +50,4 @@ const contactUrl = `https://wa.me/6285740636055?text=${encodeURIComponent("Halo 
   outline-offset: 3px;
 }
 
-@media (max-width: 768px) {
-  .whatsapp-contact {
-    right: 16px;
-    bottom: 76px;
-    width: 46px;
-    height: 46px;
-  }
-}
 </style>

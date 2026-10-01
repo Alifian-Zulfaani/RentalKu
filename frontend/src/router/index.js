@@ -29,7 +29,13 @@ const routes = [
     path: "/admin/login",
     name: "AdminLogin",
     component: () => import("../views/admin/LoginPage.vue"),
-    meta: { seo: { title: "Admin RentalKu", noindex: true } },
+    meta: {
+      seo: {
+        title: "Masuk Admin | RentalKu",
+        description: "Halaman masuk administrator RentalKu.",
+        noindex: true,
+      },
+    },
   },
   {
     path: "/admin",
@@ -41,16 +47,37 @@ const routes = [
         path: "dashboard",
         name: "Dashboard",
         component: () => import("../views/admin/DashboardPage.vue"),
+        meta: {
+          seo: {
+            title: "Ringkasan Admin | RentalKu",
+            description: "Ringkasan pendaftaran aplikasi Rental dan Booking.",
+            noindex: true,
+          },
+        },
       },
       {
         path: "rental",
         name: "RentalSubscribers",
         component: () => import("../views/admin/SubscriberPage.vue"),
+        meta: {
+          seo: {
+            title: "Pendaftar Rental | Admin RentalKu",
+            description: "Kelola pendaftar aplikasi Rental.",
+            noindex: true,
+          },
+        },
       },
       {
         path: "booking",
         name: "BookingSubscribers",
         component: () => import("../views/admin/SubscriberPage.vue"),
+        meta: {
+          seo: {
+            title: "Pendaftar Booking | Admin RentalKu",
+            description: "Kelola pendaftar aplikasi Booking.",
+            noindex: true,
+          },
+        },
       },
       { path: "subscribers", redirect: "/admin/rental" },
     ],

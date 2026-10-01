@@ -34,10 +34,10 @@ onUnmounted(() => window.removeEventListener("scroll", handleScroll));
 <style scoped>
 .scroll-to-top {
   position: fixed;
-  bottom: 86px;
-  right: 24px;
-  width: 48px;
-  height: 48px;
+  bottom: calc(var(--floating-action-bottom) + var(--floating-action-size) + var(--floating-action-gap));
+  right: var(--floating-action-right);
+  width: var(--floating-action-size);
+  height: var(--floating-action-size);
   background: var(--accent-gradient);
   color: white;
   border: none;
@@ -66,12 +66,4 @@ onUnmounted(() => window.removeEventListener("scroll", handleScroll));
   background: var(--accent-gradient-hover);
 }
 
-@media (max-width: 768px) {
-  .scroll-to-top {
-    bottom: 16px;
-    right: 16px;
-    width: 46px;
-    height: 46px;
-  }
-}
 </style>

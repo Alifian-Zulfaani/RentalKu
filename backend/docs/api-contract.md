@@ -1,108 +1,112 @@
-# API Contract Frontend
-
-Dokumen ini mencatat kontrak HTTP yang **sedang dikonsumsi frontend RentalKu**. Gunakan sebagai kompatibilitas minimum saat migrasi backend. Base URL default: `http://localhost:3000/api`.
+# Kontrak API platform RentalKu
 
 ## Aturan umum
 
-- Semua body menggunakan JSON. Endpoint admin membutuhkan `Authorization: Bearer <jwt>`.
-- Kesalahan validasi memakai status `422`: `{ "message": "...", "errors": [{ "field": "email", "message": "..." }] }`.
-- Kesalahan lain minimal memiliki `{ "message": "..." }`. Token tidak ada, tidak valid, atau expired memakai `401`.
-- Tanggal dikirim sebagai ISO 8601 string. Status subscriber hanya `pending`, `confirmed`, atau `rejected`. `product_type` bernilai `rental` atau `booking`; data sebelum migrasi bernilai `rental`.
+Base URL lokal: `http://localhost:3000/api`. Request dengan body memakai JSON. Endpoint admin membutuhkan `Authorization: Bearer <token>`.
 
-## Endpoint publik
+Respons sukses memuat `data`; `message` ditambahkan untuk tindakan yang perlu dikonfirmasi. Daftar berpaginasi memakai `meta.pagination`. Penghapusan berhasil mengembalikan `204 No Content` tanpa body. Tanggal respons menggunakan ISO 8601 UTC.
 
-### `POST /public/checkout`
-
-Membuat pendaftaran early access. Tidak membutuhkan token.
-
-| Field | Wajib | Kontrak |
-| --- | --- | --- |
-| `name` | Ya | string, 2-100 karakter |
-| `email` | Ya | email valid |
-| `whatsapp` | Ya | nomor Indonesia (`08`, `62`, atau `+62`) |
-| `business_name` | Ya | string, 2-100 karakter |
-| `business_type` | Ya | string, 2-100 karakter |
-| `product_type` | Ya | `rental` atau `booking` |
-| `plan` | Tidak | frontend mengirim `lifetime` |
-| `payment_method` | Tidak | frontend mengirim `free` |
-
-Respons sukses `201`:
+Respons gagal memakai [RFC 9457 Problem Details](https://www.rfc-editor.org/rfc/rfc9457.html) dengan `Content-Type: application/problem+json`:
 
 ```json
 {
-  "message": "Pendaftaran berhasil dan sedang menunggu review.",
+  "type": "about:blank",
+  "title": "Unprocessable Entity",
+  "status": 422,
+  "detail": "Periksa kembali data yang diisi.",
+  "instance": "/api/public/checkout",
+  "errors": [{ "field": "email", "message": "Email tidak valid" }]
+}
+```
+
+`errors` hanya ada pada kesalahan field. Status yang dipakai: `400` JSON rusak, `401` autentikasi, `403` CORS, `404` tidak ditemukan, `409` pendaftaran ganda, `413` body terlalu besar, `422` validasi, dan `500` gangguan layanan. Detail kesalahan internal tidak dikirim ke klien.
+
+## Endpoint publik
+
+| Method | Endpoint | Keterangan |
+| --- | --- | --- |
+| `GET` | `/health` | Status layanan; respons `{ "data": { "status": "ok" } }` |
+| `POST` | `/public/checkout` | Mendaftarkan bisnis untuk early access gratis |
+
+Body `POST /public/checkout` wajib memuat `name` (2–100 karakter), `email`, `whatsapp` (nomor Indonesia), `business_name` (2–100), `business_type` (2–100), dan `product_type` (`rental` atau `booking`). Klien tidak menentukan `plan`, `payment_method`, atau `amount`; server menetapkan `early_access`, `null`, dan `0`.
+
+Respons `201`:
+
+```json
+{
+  "message": "Pendaftaran diterima. Tim kami akan meninjaunya terlebih dahulu.",
   "data": {
-    "id": 12,
-    "name": "Nama pemilik",
-    "email": "nama@bisnis.com",
+    "id": 1,
+    "name": "Ayu Lestari",
+    "email": "ayu@example.com",
     "whatsapp": "081234567890",
-    "business_name": "Nama Bisnis",
+    "business_name": "Studio Ayu",
+    "business_type": "Fotografi",
     "product_type": "booking",
-    "subdomain": "nama-bisnis",
-    "plan": "lifetime",
-    "payment_method": "free",
+    "subdomain": "studio-ayu",
+    "plan": "early_access",
+    "payment_method": null,
     "amount": 0,
     "status": "pending",
-    "created_at": "2026-09-28T00:00:00.000Z"
+    "created_at": "2026-10-01T02:00:00.000Z"
   }
 }
 ```
 
-Email yang sudah terdaftar untuk produk yang sama mengembalikan `409`. Satu email dapat mendaftar pada kedua produk.
+Satu email boleh mendaftar sekali pada masing-masing produk. Pendaftaran kedua pada produk yang sama mengembalikan `409` dengan `errors[0].field = "email"`.
 
-## Endpoint autentikasi admin
+## Autentikasi admin
 
-### `POST /auth/login`
+| Method | Endpoint | Keterangan |
+| --- | --- | --- |
+| `POST` | `/auth/login` | Masuk dengan `email` dan `password`; respons memuat `data.token` (JWT) dan `data.admin` |
+| `GET` | `/auth/me` | Identitas admin (`id`, `name`, `email`, `created_at`) di dalam `data` |
 
-Body: `{ "email": "admin@contoh.com", "password": "..." }`. Respons `200` harus memuat `token` JWT dan `admin` dengan `id`, `name`, serta `email`. Kredensial salah mengembalikan `401`.
-
-```json
-{ "message": "Login berhasil", "token": "<jwt>", "admin": { "id": 1, "name": "Admin", "email": "admin@contoh.com" } }
-```
-
-## Endpoint subscriber admin
-
-Semua endpoint pada bagian ini membutuhkan JWT admin.
-
-### `GET /subscribers/stats`
-
-Respons `200`:
+Contoh respons login `200`:
 
 ```json
 {
-  "totalSubscribers": 12,
-  "confirmed": 4,
-  "pending": 7,
-  "rejected": 1,
-  "totalRevenue": 0,
-  "byProduct": { "rental": { "total": 8, "pending": 5, "confirmed": 3 }, "booking": { "total": 4, "pending": 2, "confirmed": 1 } },
-  "recentSubscribers": []
+  "message": "Berhasil masuk.",
+  "data": {
+    "token": "<jwt>",
+    "admin": { "id": 1, "name": "Admin", "email": "admin@example.com" }
+  }
 }
 ```
 
-Setiap item `recentSubscribers` minimal berisi `id`, `name`, `email`, `business_name`, `plan`, `payment_method`, `amount`, `status`, dan `created_at`.
+## Endpoint admin
 
-### `GET /subscribers`
+| Method | Endpoint | Keterangan |
+| --- | --- | --- |
+| `GET` | `/subscribers` | Daftar pendaftar berpaginasi |
+| `GET` | `/subscribers/stats` | Statistik dan lima pendaftar terbaru |
+| `GET` | `/subscribers/:id` | Detail pendaftar |
+| `PATCH` | `/subscribers/:id/status` | Ubah status dan catatan |
+| `DELETE` | `/subscribers/:id` | Hapus pendaftar; sukses `204` tanpa body |
 
-Query opsional: `search` (maksimum 100 karakter), `status`, `product_type` (`rental` atau `booking`), `page` (mulai 1), dan `limit` (1-100). Panel admin selalu mengirim `product_type` sesuai menu.
-
-Respons `200`:
+`GET /subscribers` menerima query opsional `search` (maksimal 100 karakter, teks literal), `status`, `product_type`, `page` (mulai 1), dan `limit` (1–100; default 10). Respons `200`:
 
 ```json
 {
-  "data": [{ "id": 12, "name": "Nama", "email": "nama@bisnis.com", "whatsapp": "081234567890", "business_name": "Nama Bisnis", "business_type": "Fotografi", "product_type": "booking", "subdomain": "nama-bisnis", "plan": "lifetime", "payment_method": "free", "amount": 0, "status": "pending", "confirmed_at": null, "notes": null, "created_at": "2026-09-28T00:00:00.000Z" }],
-  "pagination": { "total": 12, "page": 1, "limit": 10, "totalPages": 2 }
+  "data": [],
+  "meta": {
+    "pagination": { "total": 0, "page": 1, "limit": 10, "totalPages": 1 }
+  }
 }
 ```
 
-### `PATCH /subscribers/:id/status`
+`GET /subscribers/stats` mengembalikan `data` berisi `totalSubscribers`, `confirmed`, `pending`, `rejected`, `recentSubscribers`, dan `byProduct.rental`/`byProduct.booking` (`total`, `pending`, `confirmed`). Pada daftar kosong, semua hitungan bernilai `0`, bukan `null`.
 
-Body: `{ "status": "confirmed" }`. `notes` opsional, maksimal 1000 karakter. Respons `200` minimal memiliki `message`; `404` jika ID tidak ada.
+`GET /subscribers/:id` mengembalikan `{ "data": <subscriber> }`. Body `PATCH /subscribers/:id/status` berisi `status` (`pending`, `confirmed`, atau `rejected`) dan `notes` opsional (maksimal 1000 karakter); respons `200` mengembalikan `message` dan `data` pendaftar setelah perubahan. ID yang tidak ditemukan mengembalikan `404`.
 
-### `DELETE /subscribers/:id`
+Data pendaftar memuat `id`, `name`, `email`, `whatsapp`, `business_name`, `business_type`, `product_type`, `subdomain`, `plan`, `payment_method`, `amount`, `status`, `confirmed_at`, `notes`, dan `created_at` sesuai konteks endpoint.
 
-Menghapus subscriber. Respons `200` minimal memiliki `message`; `404` jika ID tidak ada.
+## Status dan aturan bisnis
 
-## Endpoint tersedia, belum dipakai frontend
+| Status internal | Label UI | Arti |
+| --- | --- | --- |
+| `pending` | Menunggu | Pendaftaran perlu ditinjau |
+| `confirmed` | Disetujui | Pendaftaran disetujui admin |
+| `rejected` | Ditolak | Pendaftaran ditolak admin |
 
-`GET /auth/me` membutuhkan JWT dan mengembalikan `id`, `name`, `email`, serta `created_at`. `GET /health` mengembalikan status layanan tanpa token.
+Status `confirmed` **bukan** bukti tenant, akun, atau subdomain aplikasi Rental/Booking sudah diprovisikan. Proses tersebut masih terpisah dari API platform.

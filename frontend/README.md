@@ -1,20 +1,39 @@
 # RentalKu Frontend
 
-Frontend platform RentalKu untuk memperkenalkan dua produk, menerima pendaftaran early access, dan mengelola customer Rental serta Booking dari panel admin. Dibangun dengan Vue 3, Vite, Pinia, Vue Router, Axios, serta CSS native.
+Situs publik dan panel admin platform RentalKu. Frontend ini memperkenalkan aplikasi Rental dan Booking serta menerima pendaftaran early access. Dibangun dengan Vue 3, Vite, Pinia, Vue Router, Axios, dan CSS native.
+
+## Fitur
+
+- Halaman publik untuk membandingkan Rental (barang dan stok) dengan Booking (jasa dan jadwal).
+- Formulir pendaftaran bisnis untuk salah satu produk; biaya early access ditetapkan backend sebesar Rp0.
+- Panel admin dengan daftar pendaftar Rental dan Booking yang terpisah, ringkasan status, pencarian, filter, dan pagination.
+- Persetujuan di platform belum otomatis membuat akun pada aplikasi bisnis.
 
 ## Menjalankan lokal
 
-```bash
+```powershell
 npm install
 Copy-Item .env.example .env
 npm run dev
 ```
 
-Buka `http://localhost:5173`. Gunakan `npm run build` untuk memverifikasi build produksi.
+Situs berjalan di `http://localhost:5173`. Jalankan `backend/` di port `3000` agar formulir dan panel admin dapat mengakses API.
 
 ## Konfigurasi
 
-- `VITE_API_BASE_URL`: alamat API, default `http://localhost:3000/api`.
-- `VITE_SITE_URL`: URL publik untuk canonical SEO.
+| Variabel | Kegunaan | Default |
+| --- | --- | --- |
+| `VITE_API_BASE_URL` | Base URL API platform | `http://localhost:3000/api` |
+| `VITE_SITE_URL` | URL publik untuk canonical SEO | Tidak ada fallback; `.env.example` berisi URL contoh |
 
-Halaman publik menjelaskan RentalKu Rental (barang dan stok) serta RentalKu Booking (jasa dan slot jadwal). Di `/order`, pendaftar memilih `product_type`. Admin memakai `/admin/rental` dan `/admin/booking` untuk dua daftar yang mengambil data dari satu tabel subscriber. Permintaan API dipusatkan di `src/services/api.js`; token admin dikirim sebagai `Authorization: Bearer <token>`. [Kontrak API platform](../backend/docs/api-contract.md).
+Vite memuat `.env` saat dijalankan. Sesuaikan `CORS_ORIGIN` pada backend jika origin frontend berubah.
+
+## Verifikasi
+
+```powershell
+npm run build
+```
+
+## Dokumentasi
+
+Halaman publik berada di `/` dan formulir di `/order`. Panel admin berada di `/admin/login`, `/admin/dashboard`, `/admin/rental`, dan `/admin/booking`. Lihat [kontrak API platform](../backend/docs/api-contract.md) untuk request dan respons yang dipakai frontend.

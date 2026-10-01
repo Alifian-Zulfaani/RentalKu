@@ -30,7 +30,7 @@
         </div>
         <div v-if="!isComplete" class="step-indicator">
           <span class="active">1. Informasi bisnis</span
-          ><span>2. Review admin</span>
+          ><span>2. Peninjauan tim</span>
         </div>
         <form
           v-if="!isComplete"
@@ -75,6 +75,7 @@
                   type="tel"
                   inputmode="tel"
                   autocomplete="tel"
+                  pattern="(?:\+62|62|0)8[0-9]{7,12}"
                   placeholder="08xxxxxxxxxx"
                   :aria-invalid="Boolean(fieldErrors.whatsapp)"
                   @input="clearFieldError('whatsapp')"
@@ -150,8 +151,8 @@
           <h2>Terima kasih, {{ registration?.name }}.</h2>
           <p>
             Pendaftaran <strong>{{ registration?.business_name }}</strong> sudah
-            masuk dan menunggu review. Agar proses lebih cepat, chat Alifian
-            Zulfaani untuk konfirmasi pendaftaran Anda.
+            masuk untuk ditinjau. Jika ada pertanyaan, hubungi tim
+            RentalKu melalui WhatsApp.
           </p>
           <div class="registration-meta">
             <span>Nomor pendaftaran</span
@@ -162,7 +163,7 @@
             :href="confirmationUrl"
             target="_blank"
             rel="noopener"
-            ><MessageCircle :size="19" /> Chat konfirmasi WhatsApp
+            ><WhatsAppIcon class="whatsapp-icon" /> Hubungi via WhatsApp
             <span>085740636055</span></a
           ><router-link to="/" class="return-home"
             >Kembali ke beranda</router-link
@@ -185,8 +186,8 @@
           ><small>gratis selama tahap awal</small>
         </div>
         <p class="summary-footnote">
-          <ShieldCheck :size="15" /> Pendaftaran akan direview admin sebelum
-          akses diaktifkan.
+          <ShieldCheck :size="15" /> Tim kami akan meninjau pendaftaran dan
+          menghubungi Anda untuk langkah berikutnya.
         </p>
       </aside>
     </div>
@@ -210,12 +211,12 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
-  MessageCircle,
   ShieldCheck,
 } from "lucide-vue-next";
 import api from "../../services/api";
 import ConfirmModal from "../../components/admin/ConfirmModal.vue";
 import ToastMessage from "../../components/shared/ToastMessage.vue";
+import WhatsAppIcon from "../../components/shared/WhatsAppIcon.vue";
 import { getApiError } from "../../utils/formatters";
 
 const loading = ref(false);
@@ -251,15 +252,15 @@ const planItems = computed(() => form.product_type === "booking" ? [
   "Reservasi dan data pelanggan",
   "Dukungan via WhatsApp",
 ] : [
-  "Order dan pelanggan tanpa batas",
+  "Pengelolaan order dan pelanggan",
   "Inventaris dan stok rental",
-  "Halaman rental untuk bisnis",
+  "Halaman rental untuk pelanggan",
   "Dukungan via WhatsApp",
 ]);
 const confirmationUrl = computed(() => {
   const business = registration.value?.business_name || "bisnis saya";
   const id = registration.value?.id || "";
-  return `https://wa.me/6285740636055?text=${encodeURIComponent(`Halo Kak Alifian, saya ingin konfirmasi pendaftaran RentalKu untuk ${business}. Nomor pendaftaran: RK-${id}.`)}`;
+  return `https://wa.me/6285740636055?text=${encodeURIComponent(`Halo tim RentalKu, saya ingin menanyakan pendaftaran ${business}. Nomor pendaftaran: RK-${id}.`)}`;
 });
 const confirmationMessage = computed(() => {
   const business = form.business_name || "bisnis Anda";
@@ -276,11 +277,7 @@ async function submitOrder() {
   error.value = "";
   clearFieldErrors();
   try {
-    const { data } = await api.post("/public/checkout", {
-      ...form,
-      plan: "lifetime",
-      payment_method: "free",
-    });
+    const { data } = await api.post("/public/checkout", { ...form });
     registration.value = data.data;
     isComplete.value = true;
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -572,6 +569,7 @@ function setFieldErrors(errors = []) {
 .whatsapp-action span {
   opacity: 0.86;
 }
+.whatsapp-icon { font-size: 19px; }
 .return-home {
   display: block;
   margin-top: 16px;
@@ -607,6 +605,7 @@ function setFieldErrors(errors = []) {
     padding-top: 38px;
     padding-bottom: 48px;
   }
+  .order-summary { grid-row: auto; }
   .field-grid {
     grid-template-columns: 1fr;
   }
@@ -619,9 +618,16 @@ function setFieldErrors(errors = []) {
   .step-indicator {
     gap: 12px;
     font-size: 0.7rem;
+    flex-wrap: wrap;
   }
   .success-panel {
     padding: 22px;
+  }
+  .registration-meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    overflow-wrap: anywhere;
   }
   .whatsapp-action {
     text-align: center;

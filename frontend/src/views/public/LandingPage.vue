@@ -61,10 +61,10 @@
     <section id="cara-kerja" class="workflow-section">
       <div class="container workflow-grid">
         <div>
-          <p class="eyebrow">Mulai tanpa drama</p>
-          <h2>Mulai dari produk yang sesuai dengan pekerjaan Anda.</h2>
+          <p class="eyebrow">Cara bergabung</p>
+          <h2>Pilih aplikasi, lalu ceritakan bisnis Anda.</h2>
           <p class="workflow-copy">
-            Pilih Rental atau Booking, daftarkan bisnis, lalu atur layanan dan pelanggan dari panel yang sesuai.
+            Isi formulir singkat untuk Rental atau Booking. Tim kami akan meninjau pendaftaran Anda dan menghubungi Anda untuk langkah berikutnya.
           </p>
           <router-link to="/order" class="btn btn-outline"
             >Daftarkan bisnis <ArrowUpRight :size="17"
@@ -86,7 +86,7 @@
       <div class="container pricing-layout">
         <div>
           <p class="eyebrow">Early access RentalKu</p>
-          <h2>Mulai gratis, sambil kami tumbuh bersama pasar.</h2>
+          <h2>Daftar tanpa biaya selama early access.</h2>
           <p>
             Pendaftaran untuk kedua aplikasi dibuka gratis selama tahap awal. Pilih produk yang sesuai dengan bisnis Anda.
           </p>
@@ -139,7 +139,7 @@
         </p>
         <div class="footer-links">
           <a href="#produk">Produk</a><a href="#harga">Harga</a
-          ><router-link to="/admin/login">Admin</router-link>
+          ><a href="#faq">FAQ</a>
         </div>
       </div>
       <div class="container footer-bottom">
@@ -167,28 +167,28 @@ import HeroSection from "../../components/public/HeroSection.vue";
 const features = [
   {
     icon: ClipboardList,
-    title: "Pesanan yang punya konteks",
+    title: "Semua detail pesanan tercatat",
     description:
       "Lihat siapa pelanggan Anda, layanan atau barang yang dipilih, dan status pesanannya tanpa pindah catatan.",
     details: ["Status yang jelas", "Catatan per transaksi"],
   },
   {
     icon: PackageCheck,
-    title: "Ketersediaan yang bisa dipercaya",
+    title: "Ketersediaan selalu terlihat",
     description:
       "Stok barang untuk Rental dan slot waktu untuk Booking dikelola sesuai aturan masing-masing produk.",
     details: ["Stok atau slot", "Kategori dan tarif"],
   },
   {
     icon: UsersRound,
-    title: "Pelanggan tidak lagi anonim",
+    title: "Riwayat pelanggan tersimpan",
     description:
       "Simpan riwayat yang membantu tim melayani pelanggan lama dengan lebih cepat dan konsisten.",
     details: ["Riwayat pesanan", "Data kontak terpusat"],
   },
   {
     icon: WalletCards,
-    title: "Angka yang tidak terlambat",
+    title: "Ringkasan bisnis mudah dibaca",
     description:
       "Ringkas nilai transaksi dan aktivitas bisnis supaya Anda tidak menunggu rekap manual untuk melihat kondisi usaha.",
     details: ["Ringkasan transaksi", "Aktivitas terbaru"],
@@ -201,14 +201,14 @@ const steps = [
       "Masukkan detail bisnis untuk bergabung pada tahap early access.",
   },
   {
-    title: "Kami review pendaftaran",
+    title: "Tim kami meninjau pendaftaran",
     description:
-      "Tim platform mengonfirmasi pendaftaran agar proses onboarding tetap rapi.",
+      "Kami memeriksa kebutuhan bisnis Anda dan menghubungi Anda untuk langkah berikutnya.",
   },
   {
-    title: "Mulai atur operasional",
+    title: "Siapkan aplikasi bisnis",
     description:
-      "Akses aplikasi yang dipilih dan susun operasional dengan data yang lebih terstruktur.",
+      "Setelah proses penyiapan, mulai masukkan barang atau layanan dan atur operasional bisnis Anda.",
   },
 ];
 const planItems = [
@@ -233,7 +233,7 @@ const faqs = [
   {
     question: "Kapan akses bisnis saya aktif?",
     answer:
-      "Pendaftaran masuk terlebih dahulu untuk direview admin platform. Setelah dikonfirmasi, proses onboarding dapat dimulai.",
+      "Tim RentalKu meninjau pendaftaran terlebih dahulu, lalu menghubungi Anda untuk proses penyiapan aplikasi.",
   },
   {
     question: "Apakah data bisnis saya terpisah?",
@@ -498,7 +498,7 @@ const faqs = [
 .site-footer {
   padding-top: 42px;
   background: var(--admin-sidebar);
-  color: #e7efeb;
+  color: var(--text-primary);
 }
 .footer-main {
   display: grid;
@@ -524,23 +524,23 @@ const faqs = [
 }
 .footer-main p {
   max-width: 290px;
-  color: #abbab2;
+  color: var(--text-secondary);
   font-size: 0.82rem;
 }
 .footer-links {
   display: grid;
   gap: 8px;
-  color: #cbd8d1;
+  color: var(--text-secondary);
   font-size: 0.82rem;
   font-weight: 700;
 }
 .footer-links a:hover {
-  color: #70d1c0;
+  color: var(--accent-primary);
 }
 .footer-bottom {
   padding: 15px 0;
-  border-top: 1px solid #34433b;
-  color: #91a59b;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-muted);
   font-size: 0.72rem;
 }
 @media (max-width: 900px) {

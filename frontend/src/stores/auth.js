@@ -19,11 +19,11 @@ export const useAuthStore = defineStore("auth", () => {
 
   async function login(email, password) {
     const { data } = await api.post("/auth/login", { email, password });
-    token.value = data.token;
-    admin.value = data.admin;
-    localStorage.setItem("rentalku_token", data.token);
-    localStorage.setItem("rentalku_admin", JSON.stringify(data.admin));
-    return data;
+    token.value = data.data.token;
+    admin.value = data.data.admin;
+    localStorage.setItem("rentalku_token", data.data.token);
+    localStorage.setItem("rentalku_admin", JSON.stringify(data.data.admin));
+    return data.data;
   }
 
   function logout() {

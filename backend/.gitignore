@@ -1,0 +1,4 @@
+.local-backups/
+node_modules/
+database.sqlite-shm
+database.sqlite-wal

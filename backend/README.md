@@ -1,23 +1,46 @@
 # RentalKu Backend
 
-API platform RentalKu untuk pendaftaran produk Rental dan Booking serta pengelolaan subscriber admin. Dibangun dengan Express dan SQLite (`better-sqlite3`). Satu tabel `subscribers` memakai kolom `product_type` (`rental` atau `booking`); data lama dimigrasikan sebagai `rental` saat aplikasi dimulai.
+API platform RentalKu untuk pendaftaran early access aplikasi Rental dan Booking serta peninjauan pendaftar oleh admin. Dibangun dengan Express dan SQLite (`better-sqlite3`). Satu tabel `subscribers` membedakan produk melalui `product_type`.
+
+## Fitur
+
+- Pendaftaran publik untuk Rental atau Booking dengan biaya Rp0 yang ditetapkan server.
+- Autentikasi JWT dan panel data pendaftar yang dapat difilter menurut produk atau status.
+- Statistik pendaftaran, perubahan status, pencarian, dan pagination.
+- Persetujuan pendaftaran belum otomatis membuat tenant, akun, atau subdomain di aplikasi bisnis.
 
 ## Menjalankan lokal
 
-```bash
+```powershell
 npm install
-Copy-Item .env.example .env
 npm run dev
 ```
 
-API berjalan di `http://localhost:3000` secara default. Gunakan `npm run seed` bila perlu membuat data awal. Atur `JWT_SECRET`, `CORS_ORIGIN`, dan `PORT` melalui `.env` sebelum deploy.
-Gunakan `DB_PATH` bila lokasi SQLite perlu dipindahkan. Jalankan `npm test` untuk verifikasi pendaftaran dan filter dua produk.
+API berjalan di `http://localhost:3000/api`. Jalankan `frontend/` di port `5173` untuk mengakses situs dan panel admin.
 
-## Struktur singkat
+## Konfigurasi
 
-- `src/routes`: definisi endpoint dan validasi request.
-- `src/controllers`: logika API.
-- `src/middleware/auth.js`: autentikasi JWT admin.
-- `src/config/database.js`: inisialisasi SQLite dan skema data.
+| Variabel | Kegunaan | Default |
+| --- | --- | --- |
+| `PORT` | Port HTTP | `3000` |
+| `JWT_SECRET` | Penanda tangan token admin; wajib di production | Fallback pengembangan |
+| `CORS_ORIGIN` | Origin frontend yang diizinkan, dipisah koma | `http://localhost:5173` |
+| `DB_PATH` | Path file SQLite | `database.sqlite` di folder backend |
 
-Endpoint daftar subscriber menerima filter `product_type`, sedangkan statistik menyertakan ringkasan per produk. [Kontrak endpoint](docs/api-contract.md).
+Salin `.env.example` menjadi `.env` bila ingin menyimpan konfigurasi lokal. File `.env` dimuat otomatis bila tersedia; variabel lingkungan proses tetap diutamakan. Gunakan Node.js 20.12 atau lebih baru. Jangan gunakan secret pengembangan di produksi.
+
+## Data awal
+
+Untuk membuat admin pada database kosong, isi `SEED_ADMIN_PASSWORD` (minimal 12 karakter) di lingkungan proses atau `.env`, lalu jalankan `npm run seed`. `SEED_ADMIN_EMAIL` opsional; default `admin@rentalku.com`. Seed tidak membuat pendaftar contoh. Untuk mengganti kata sandi admin yang sudah ada, jalankan `npm run seed -- --rotate` dengan variabel tersebut. Mode production menolak akun yang masih memakai kata sandi seed bawaan.
+
+`npm run db:reset:dev` membuat backup di `.local-backups/`, menghapus pendaftar dari database lokal default, dan mempertahankan admin. Perintah ditolak dalam mode production atau saat `DB_PATH` digunakan. Backup berisi data pribadi; simpan dengan aman dan jangan commit ke Git.
+
+## Verifikasi
+
+```powershell
+npm test
+```
+
+## Dokumentasi
+
+Lihat [kontrak API platform](docs/api-contract.md) untuk format respons dan seluruh endpoint. Keputusan `confirmed` berarti pendaftaran disetujui, **bukan** aplikasi tenant sudah otomatis aktif.

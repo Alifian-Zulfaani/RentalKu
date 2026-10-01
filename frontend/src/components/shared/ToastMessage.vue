@@ -39,8 +39,8 @@ const icon = computed(() =>
 .toast-message {
   position: fixed;
   right: 24px;
-  top: 24px;
-  z-index: 10000;
+  top: 82px;
+  z-index: 25;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -79,7 +79,7 @@ const icon = computed(() =>
 }
 @media (max-width: 560px) {
   .toast-message {
-    top: 16px;
+    top: 72px;
     right: 16px;
     left: 16px;
     max-width: none;

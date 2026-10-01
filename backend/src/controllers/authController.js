@@ -2,21 +2,22 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("../config/database");
 const { JWT_SECRET } = require("../middleware/auth");
-const { logServerError } = require("../utils/http");
+const { sendProblem, sendServerError } = require("../utils/http");
+const { toIsoUtc } = require("../utils/dates");
 
 exports.login = (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const admin = db.prepare("SELECT * FROM admins WHERE email = ?").get(email);
+    const admin = db.prepare("SELECT * FROM admins WHERE email = ? COLLATE NOCASE").get(email);
 
     if (!admin) {
-      return res.status(401).json({ message: "Email atau password salah" });
+      return sendProblem(req, res, 401, "Email atau kata sandi salah.");
     }
 
     const isMatch = bcrypt.compareSync(password, admin.password);
     if (!isMatch) {
-      return res.status(401).json({ message: "Email atau password salah" });
+      return sendProblem(req, res, 401, "Email atau kata sandi salah.");
     }
 
     const token = jwt.sign(
@@ -26,13 +27,11 @@ exports.login = (req, res) => {
     );
 
     res.json({
-      message: "Login berhasil",
-      token,
-      admin: { id: admin.id, name: admin.name, email: admin.email },
+      message: "Berhasil masuk.",
+      data: { token, admin: { id: admin.id, name: admin.name, email: admin.email } },
     });
   } catch (err) {
-    logServerError("auth.login", err);
-    res.status(500).json({ message: "Terjadi kesalahan pada server" });
+    return sendServerError(req, res, "auth.login", err);
   }
 };
 
@@ -41,11 +40,9 @@ exports.me = (req, res) => {
     const admin = db
       .prepare("SELECT id, name, email, created_at FROM admins WHERE id = ?")
       .get(req.admin.id);
-    if (!admin)
-      return res.status(404).json({ message: "Admin tidak ditemukan" });
-    res.json(admin);
+    if (!admin) return sendProblem(req, res, 404, "Akun admin tidak ditemukan.");
+    res.json({ data: { ...admin, created_at: toIsoUtc(admin.created_at) } });
   } catch (err) {
-    logServerError("auth.me", err);
-    res.status(500).json({ message: "Terjadi kesalahan pada server" });
+    return sendServerError(req, res, "auth.me", err);
   }
 };

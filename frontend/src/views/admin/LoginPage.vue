@@ -5,22 +5,21 @@
         ><span>R.</span>RentalKu</router-link
       >
       <div class="login-copy">
-        <p class="eyebrow">Platform workspace</p>
-        <h1>Masuk ke ruang kendali.</h1>
+        <p class="eyebrow">Panel RentalKu</p>
+        <h1>Kelola pendaftaran bisnis.</h1>
         <p>
-          Kelola pendaftaran bisnis rental dan lihat pertumbuhan platform dari
-          satu tempat.
+          Tinjau pendaftar aplikasi Rental dan Booking dari satu tempat.
         </p>
       </div>
       <div class="login-notes">
-        <span><Check :size="16" />Review subscriber lebih cepat</span
-        ><span><Check :size="16" />Status dan nilai pendapatan terpantau</span>
+        <span><Check :size="16" />Pendaftaran Rental dan Booking terpisah</span
+        ><span><Check :size="16" />Status setiap pendaftar mudah dipantau</span>
       </div>
     </div>
     <section class="login-form-wrap">
       <div class="login-card">
         <div>
-          <p class="eyebrow">Admin access</p>
+          <p class="eyebrow">Akses admin</p>
           <h2>Selamat datang kembali</h2>
           <p class="form-intro">
             Gunakan akun administrator untuk melanjutkan.
@@ -36,18 +35,18 @@
               required
               placeholder="admin@rentalku.com" /></label
           ><label class="field"
-            ><span>Password</span>
+            ><span>Kata sandi</span>
             <div class="password-input">
               <input
                 v-model="password"
                 :type="showPassword ? 'text' : 'password'"
                 autocomplete="current-password"
                 required
-                placeholder="Masukkan password"
+                placeholder="Masukkan kata sandi"
               /><button
                 type="button"
                 :aria-label="
-                  showPassword ? 'Sembunyikan password' : 'Tampilkan password'
+                  showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'
                 "
                 @click="showPassword = !showPassword"
               >
@@ -65,7 +64,7 @@
             :disabled="loading"
             type="submit"
           >
-            {{ loading ? "Memverifikasi..." : "Masuk ke dashboard" }}
+            {{ loading ? "Memeriksa akun..." : "Masuk" }}
             <ArrowRight v-if="!loading" :size="17" />
           </button>
         </form>
@@ -128,7 +127,7 @@ async function handleLogin() {
   justify-content: space-between;
   padding: clamp(30px, 6vw, 76px);
   background: var(--admin-sidebar);
-  color: #e8f0eb;
+  color: var(--text-primary);
 }
 .brand {
   display: inline-flex;
@@ -144,15 +143,15 @@ async function handleLogin() {
   height: 31px;
   place-items: center;
   border-radius: 6px;
-  background: #70d1c0;
-  color: #15332d;
+  background: var(--sidebar-brand);
+  color: var(--sidebar-brand-text);
 }
 .login-copy {
   max-width: 410px;
   margin: auto 0;
 }
 .eyebrow {
-  color: #8bd9cd;
+  color: var(--accent-primary);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.07em;
@@ -163,12 +162,12 @@ async function handleLogin() {
   font-size: clamp(2.2rem, 4vw, 3.7rem);
 }
 .login-copy p:last-child {
-  color: #b9c9c0;
+  color: var(--text-secondary);
 }
 .login-notes {
   display: grid;
   gap: 9px;
-  color: #b9c9c0;
+  color: var(--text-secondary);
   font-size: 0.8rem;
 }
 .login-notes span {
@@ -177,7 +176,7 @@ async function handleLogin() {
   gap: 7px;
 }
 .login-notes svg {
-  color: #70d1c0;
+  color: var(--accent-primary);
 }
 .login-form-wrap {
   display: grid;
@@ -262,7 +261,7 @@ async function handleLogin() {
 .return-link:hover {
   color: var(--accent-primary);
 }
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .login-page {
     grid-template-columns: 1fr;
   }
@@ -282,5 +281,11 @@ async function handleLogin() {
   .login-form-wrap {
     padding: 38px 24px;
   }
+}
+@media (max-width: 480px) {
+  .login-panel { min-height: 245px; padding: 22px 18px; }
+  .login-copy { margin-top: 29px; }
+  .login-copy h1 { font-size: 1.7rem; }
+  .login-form-wrap { padding: 30px 18px; }
 }
 </style>
