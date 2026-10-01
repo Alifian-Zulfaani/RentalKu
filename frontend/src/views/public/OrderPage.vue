@@ -3,7 +3,7 @@
     <header class="checkout-header">
       <div class="container checkout-nav">
         <router-link to="/" class="brand"
-          ><span><Boxes :size="19" /></span>RentalKu</router-link
+          ><span>R.</span>RentalKu</router-link
         ><router-link to="/" class="back-link"
           ><ArrowLeft :size="16" /> Kembali</router-link
         >
@@ -17,14 +17,14 @@
             {{
               isComplete
                 ? "Pendaftaran diterima"
-                : "Mulai workspace rental Anda"
+                : "Pilih aplikasi untuk bisnis Anda"
             }}
           </h1>
           <p>
             {{
               isComplete
                 ? "Kami sudah mencatat detail bisnis Anda."
-                : "Lengkapi data berikut untuk bergabung di tahap awal RentalKu. Tidak ada pembayaran saat ini."
+                : "Pilih Rental untuk penyewaan barang atau Booking untuk jasa berbasis jadwal. Pendaftaran early access gratis."
             }}
           </p>
         </div>
@@ -87,10 +87,18 @@
           <fieldset>
             <legend>Profil bisnis</legend>
             <div class="field-grid">
+              <label class="field full" :class="{ invalid: fieldErrors.product_type }">
+                <span>Aplikasi yang dibutuhkan</span>
+                <select v-model="form.product_type" required :aria-invalid="Boolean(fieldErrors.product_type)" @change="clearFieldError('product_type')">
+                  <option value="rental">Rental · inventaris dan penyewaan barang</option>
+                  <option value="booking">Booking · reservasi jasa dan kalender</option>
+                </select>
+                <small v-if="fieldErrors.product_type" class="field-error">{{ fieldErrors.product_type }}</small>
+              </label>
               <label
                 class="field full"
                 :class="{ invalid: fieldErrors.business_name }"
-                ><span>Nama bisnis rental</span
+                ><span>Nama bisnis</span
                 ><input
                   v-model.trim="form.business_name"
                   required
@@ -163,9 +171,9 @@
       </section>
       <aside class="order-summary">
         <p class="summary-kicker">Ringkasan akses</p>
-        <h2>RentalKu Early Access</h2>
+        <h2>RentalKu {{ form.product_type === 'booking' ? 'Booking' : 'Rental' }}</h2>
         <p class="summary-text">
-          Akses awal untuk pondasi operasional rental Anda.
+          Akses awal untuk operasional {{ form.product_type === 'booking' ? 'reservasi jasa' : 'rental barang' }} Anda.
         </p>
         <ul>
           <li v-for="item in planItems" :key="item">
@@ -196,10 +204,10 @@
 
 <script setup>
 import { computed, reactive, ref } from "vue";
+import { useRoute } from "vue-router";
 import {
   ArrowLeft,
   ArrowRight,
-  Boxes,
   Check,
   CheckCircle2,
   MessageCircle,
@@ -216,12 +224,14 @@ const registration = ref(null);
 const error = ref("");
 const showConfirmation = ref(false);
 const fieldErrors = reactive({});
+const route = useRoute();
 const form = reactive({
   name: "",
   email: "",
   whatsapp: "",
   business_name: "",
   business_type: "",
+  product_type: route.query.product === "booking" ? "booking" : "rental",
 });
 const businessTypes = [
   "Peralatan outdoor",
@@ -230,15 +240,22 @@ const businessTypes = [
   "Tenda & dekorasi",
   "Kendaraan",
   "Meja & kursi",
+  "Fotografi & videografi jasa",
+  "Salon & kecantikan",
+  "Konsultasi & layanan profesional",
   "Lainnya",
 ];
-const planItems = [
+const planItems = computed(() => form.product_type === "booking" ? [
+  "Kalender dan slot ketersediaan",
+  "Halaman studio dan profil fotografer",
+  "Reservasi dan data pelanggan",
+  "Dukungan via WhatsApp",
+] : [
   "Order dan pelanggan tanpa batas",
   "Inventaris dan stok rental",
-  "Halaman booking untuk bisnis",
-  "Ringkasan operasional",
+  "Halaman rental untuk bisnis",
   "Dukungan via WhatsApp",
-];
+]);
 const confirmationUrl = computed(() => {
   const business = registration.value?.business_name || "bisnis saya";
   const id = registration.value?.id || "";
@@ -246,7 +263,7 @@ const confirmationUrl = computed(() => {
 });
 const confirmationMessage = computed(() => {
   const business = form.business_name || "bisnis Anda";
-  return `${business} akan didaftarkan ke RentalKu Early Access tanpa biaya. Pastikan email dan nomor WhatsApp Anda sudah benar sebelum melanjutkan.`;
+  return `${business} akan didaftarkan untuk aplikasi ${form.product_type === "booking" ? "Booking" : "Rental"} tanpa biaya. Pastikan email dan nomor WhatsApp Anda sudah benar sebelum melanjutkan.`;
 });
 
 function openConfirmation() {

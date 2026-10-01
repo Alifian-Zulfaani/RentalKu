@@ -36,7 +36,16 @@
   --font-family: "DM Sans", Arial, sans-serif;
   --font-display: "Manrope", Arial, sans-serif;
   --admin-bg: #f7f8f5;
-  --admin-sidebar: #1c2724;
+  --admin-sidebar: #ffffff;
+  --sidebar-text: #4d5f57;
+  --sidebar-muted: #829189;
+  --sidebar-border: #dce3dc;
+  --sidebar-hover: #eef3ef;
+  --sidebar-active: #e2f2ec;
+  --sidebar-active-text: #145f51;
+  --sidebar-logout: #a9483e;
+  --sidebar-brand: #08756f;
+  --sidebar-brand-text: #ffffff;
 }
 
 [data-theme="dark"] {
@@ -63,6 +72,15 @@
   --border-strong: #4a5a53;
   --admin-bg: #18211f;
   --admin-sidebar: #121a17;
+  --sidebar-text: #b9c9c0;
+  --sidebar-muted: #91a59b;
+  --sidebar-border: #36453f;
+  --sidebar-hover: #26352f;
+  --sidebar-active: #d8f1eb;
+  --sidebar-active-text: #15332d;
+  --sidebar-logout: #e6a7a0;
+  --sidebar-brand: #70d1c0;
+  --sidebar-brand-text: #16332e;
 }
 
 * { box-sizing: border-box; }

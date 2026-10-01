@@ -1,7 +1,7 @@
 const Database = require("better-sqlite3");
 const path = require("path");
 
-const dbPath = path.join(__dirname, "..", "..", "database.sqlite");
+const dbPath = process.env.DB_PATH || path.join(__dirname, "..", "..", "database.sqlite");
 const db = new Database(dbPath);
 
 db.pragma("journal_mode = WAL");
@@ -39,6 +39,9 @@ const subscriberColumns = db.prepare("PRAGMA table_info(subscribers)").all();
 if (subscriberColumns.some((column) => column.name === "password")) {
   db.exec("ALTER TABLE subscribers DROP COLUMN password");
 }
+if (!subscriberColumns.some((column) => column.name === "product_type")) {
+  db.exec("ALTER TABLE subscribers ADD COLUMN product_type TEXT NOT NULL DEFAULT 'rental'");
+}
 
 db.exec(`
   CREATE INDEX IF NOT EXISTS idx_subscribers_email
@@ -49,6 +52,9 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_subscribers_status_created_at
   ON subscribers(status, created_at DESC);
+
+  CREATE INDEX IF NOT EXISTS idx_subscribers_product_created_at
+  ON subscribers(product_type, created_at DESC);
 `);
 
 module.exports = db;

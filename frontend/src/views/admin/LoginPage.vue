@@ -2,7 +2,7 @@
   <main class="login-page">
     <div class="login-panel">
       <router-link to="/" class="brand"
-        ><span><Boxes :size="19" /></span>RentalKu</router-link
+        ><span>R.</span>RentalKu</router-link
       >
       <div class="login-copy">
         <p class="eyebrow">Platform workspace</p>
@@ -84,7 +84,6 @@ import {
   AlertCircle,
   ArrowLeft,
   ArrowRight,
-  Boxes,
   Check,
   Eye,
   EyeOff,

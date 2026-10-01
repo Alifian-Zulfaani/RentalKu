@@ -3,10 +3,10 @@ const { logServerError } = require("../utils/http");
 
 exports.getAll = (req, res) => {
   try {
-    const { search, status } = req.query;
+    const { search, status, product_type } = req.query;
     const page = Number(req.query.page || 1);
     const limit = Number(req.query.limit || 10);
-    let query = `SELECT id, name, email, whatsapp, business_name, business_type, subdomain, plan, payment_method, amount, status, confirmed_at, notes, created_at FROM subscribers WHERE 1=1`;
+    let query = `SELECT id, name, email, whatsapp, business_name, business_type, product_type, subdomain, plan, payment_method, amount, status, confirmed_at, notes, created_at FROM subscribers WHERE 1=1`;
     const params = [];
 
     if (search) {
@@ -16,6 +16,10 @@ exports.getAll = (req, res) => {
     if (status) {
       query += ` AND status = ?`;
       params.push(status);
+    }
+    if (product_type) {
+      query += ` AND product_type = ?`;
+      params.push(product_type);
     }
 
     const countQuery = query.replace(
@@ -49,7 +53,7 @@ exports.getById = (req, res) => {
   try {
     const sub = db
       .prepare(
-        "SELECT id, name, email, whatsapp, business_name, business_type, subdomain, plan, payment_method, amount, status, confirmed_at, notes, created_at FROM subscribers WHERE id = ?",
+        "SELECT id, name, email, whatsapp, business_name, business_type, product_type, subdomain, plan, payment_method, amount, status, confirmed_at, notes, created_at FROM subscribers WHERE id = ?",
       )
       .get(req.params.id);
     if (!sub)
@@ -134,11 +138,18 @@ exports.getStats = (req, res) => {
     const recentSubscribers = db
       .prepare(
         `
-      SELECT id, name, email, business_name, plan, payment_method, amount, status, created_at
+      SELECT id, name, email, business_name, product_type, plan, payment_method, amount, status, created_at
       FROM subscribers ORDER BY created_at DESC LIMIT 5
     `,
       )
       .all();
+
+    const byProduct = Object.fromEntries(
+      ["rental", "booking"].map((type) => [
+        type,
+        db.prepare("SELECT COUNT(*) AS total, SUM(status = 'pending') AS pending, SUM(status = 'confirmed') AS confirmed FROM subscribers WHERE product_type = ?").get(type),
+      ]),
+    );
 
     res.json({
       totalSubscribers,
@@ -147,6 +158,7 @@ exports.getStats = (req, res) => {
       rejected,
       totalRevenue,
       recentSubscribers,
+      byProduct,
     });
   } catch (err) {
     logServerError("subscribers.getStats", err);

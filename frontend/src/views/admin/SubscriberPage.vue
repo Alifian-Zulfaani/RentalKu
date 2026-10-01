@@ -2,8 +2,8 @@
   <div class="subscriber-page">
     <section class="page-intro">
       <div>
-        <p class="page-kicker">Manajemen subscriber</p>
-        <h2>Review pendaftaran bisnis</h2>
+        <p class="page-kicker">{{ productLabel }} · Manajemen subscriber</p>
+        <h2>Customer {{ productLabel }}</h2>
         <p>
           Konfirmasi akses, tolak pendaftaran yang belum sesuai, atau rapikan
           data yang sudah selesai.
@@ -37,7 +37,7 @@
               <th>Kontak</th>
               <th>Metode</th>
               <th>Status</th>
-              <th><span class="sr-only">Aksi</span></th>
+              <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -75,7 +75,7 @@
                   title="Konfirmasi subscriber"
                   @click="openStatusModal(subscriber, 'confirmed')"
                 >
-                  <Check :size="17" /></button
+                  <Check :size="17" /> Konfirmasi</button
                 ><button
                   v-if="subscriber.status === 'pending'"
                   class="action-button reject"
@@ -83,7 +83,7 @@
                   title="Tolak subscriber"
                   @click="openStatusModal(subscriber, 'rejected')"
                 >
-                  <X :size="17" /></button
+                  <X :size="17" /> Tolak</button
                 ><button
                   v-if="subscriber.status === 'rejected'"
                   class="action-text"
@@ -98,7 +98,7 @@
                   title="Hapus subscriber"
                   @click="openDeleteModal(subscriber)"
                 >
-                  <Trash2 :size="16" />
+                  <Trash2 :size="16" /> Hapus
                 </button>
               </td>
             </tr>
@@ -211,6 +211,8 @@ import { formatCurrency, getApiError } from "../../utils/formatters";
 
 const subscribers = ref([]);
 const route = useRoute();
+const productType = computed(() => route.path.endsWith("/booking") ? "booking" : "rental");
+const productLabel = computed(() => productType.value === "booking" ? "Booking" : "Rental");
 const loading = ref(false);
 const search = ref("");
 const filterStatus = ref(route.query.status || "");
@@ -255,6 +257,7 @@ async function fetchSubscribers() {
     const params = { page: pagination.page, limit: 10 };
     if (search.value) params.search = search.value;
     if (filterStatus.value) params.status = filterStatus.value;
+    params.product_type = productType.value;
     const { data } = await api.get("/subscribers", { params });
     subscribers.value = data.data;
     Object.assign(pagination, data.pagination);
@@ -338,6 +341,12 @@ watch(filterStatus, () => {
   fetchSubscribers();
 });
 onMounted(fetchSubscribers);
+watch(productType, () => {
+  pagination.page = 1;
+  search.value = "";
+  filterStatus.value = "";
+  fetchSubscribers();
+});
 onBeforeUnmount(() => clearTimeout(searchTimer));
 </script>
 
@@ -496,13 +505,18 @@ td small {
   gap: 6px;
 }
 .action-button {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 9px;
   border: 1px solid var(--border-color);
   border-radius: 5px;
   background: var(--surface);
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 .action-button.approve {
   color: var(--success);

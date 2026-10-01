@@ -7,7 +7,7 @@ Dokumen ini mencatat kontrak HTTP yang **sedang dikonsumsi frontend RentalKu**. 
 - Semua body menggunakan JSON. Endpoint admin membutuhkan `Authorization: Bearer <jwt>`.
 - Kesalahan validasi memakai status `422`: `{ "message": "...", "errors": [{ "field": "email", "message": "..." }] }`.
 - Kesalahan lain minimal memiliki `{ "message": "..." }`. Token tidak ada, tidak valid, atau expired memakai `401`.
-- Tanggal dikirim sebagai ISO 8601 string. Status subscriber hanya `pending`, `confirmed`, atau `rejected`.
+- Tanggal dikirim sebagai ISO 8601 string. Status subscriber hanya `pending`, `confirmed`, atau `rejected`. `product_type` bernilai `rental` atau `booking`; data sebelum migrasi bernilai `rental`.
 
 ## Endpoint publik
 
@@ -22,6 +22,7 @@ Membuat pendaftaran early access. Tidak membutuhkan token.
 | `whatsapp` | Ya | nomor Indonesia (`08`, `62`, atau `+62`) |
 | `business_name` | Ya | string, 2-100 karakter |
 | `business_type` | Ya | string, 2-100 karakter |
+| `product_type` | Ya | `rental` atau `booking` |
 | `plan` | Tidak | frontend mengirim `lifetime` |
 | `payment_method` | Tidak | frontend mengirim `free` |
 
@@ -36,6 +37,7 @@ Respons sukses `201`:
     "email": "nama@bisnis.com",
     "whatsapp": "081234567890",
     "business_name": "Nama Bisnis",
+    "product_type": "booking",
     "subdomain": "nama-bisnis",
     "plan": "lifetime",
     "payment_method": "free",
@@ -46,7 +48,7 @@ Respons sukses `201`:
 }
 ```
 
-Email yang sudah terdaftar mengembalikan `409`.
+Email yang sudah terdaftar untuk produk yang sama mengembalikan `409`. Satu email dapat mendaftar pada kedua produk.
 
 ## Endpoint autentikasi admin
 
@@ -73,6 +75,7 @@ Respons `200`:
   "pending": 7,
   "rejected": 1,
   "totalRevenue": 0,
+  "byProduct": { "rental": { "total": 8, "pending": 5, "confirmed": 3 }, "booking": { "total": 4, "pending": 2, "confirmed": 1 } },
   "recentSubscribers": []
 }
 ```
@@ -81,13 +84,13 @@ Setiap item `recentSubscribers` minimal berisi `id`, `name`, `email`, `business_
 
 ### `GET /subscribers`
 
-Query opsional: `search` (maksimum 100 karakter), `status`, `page` (mulai 1), dan `limit` (1-100). Frontend hanya mengirim `status` ketika ada nilai, bukan string kosong.
+Query opsional: `search` (maksimum 100 karakter), `status`, `product_type` (`rental` atau `booking`), `page` (mulai 1), dan `limit` (1-100). Panel admin selalu mengirim `product_type` sesuai menu.
 
 Respons `200`:
 
 ```json
 {
-  "data": [{ "id": 12, "name": "Nama", "email": "nama@bisnis.com", "whatsapp": "081234567890", "business_name": "Nama Bisnis", "business_type": "Kendaraan", "subdomain": "nama-bisnis", "plan": "lifetime", "payment_method": "free", "amount": 0, "status": "pending", "confirmed_at": null, "notes": null, "created_at": "2026-09-28T00:00:00.000Z" }],
+  "data": [{ "id": 12, "name": "Nama", "email": "nama@bisnis.com", "whatsapp": "081234567890", "business_name": "Nama Bisnis", "business_type": "Fotografi", "product_type": "booking", "subdomain": "nama-bisnis", "plan": "lifetime", "payment_method": "free", "amount": 0, "status": "pending", "confirmed_at": null, "notes": null, "created_at": "2026-09-28T00:00:00.000Z" }],
   "pagination": { "total": 12, "page": 1, "limit": 10, "totalPages": 2 }
 }
 ```

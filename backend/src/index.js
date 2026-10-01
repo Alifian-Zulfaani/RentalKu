@@ -61,6 +61,10 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 RentalKu Company API running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 RentalKu Company API running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;

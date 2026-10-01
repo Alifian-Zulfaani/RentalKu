@@ -10,15 +10,15 @@ function slugify(value) {
     .slice(0, 20);
 }
 
-function createAvailableSubdomain(value) {
+function createAvailableSubdomain(value, productType) {
   const base = slugify(value) || "rental";
   let candidate = base;
   let suffix = 2;
 
   while (
     db
-      .prepare("SELECT 1 FROM subscribers WHERE subdomain = ? COLLATE NOCASE")
-      .get(candidate)
+      .prepare("SELECT 1 FROM subscribers WHERE subdomain = ? COLLATE NOCASE AND product_type = ?")
+      .get(candidate, productType)
   ) {
     candidate = `${base.slice(0, 17)}-${suffix}`;
     suffix += 1;
@@ -35,15 +35,16 @@ exports.checkout = (req, res) => {
       whatsapp,
       business_name,
       business_type,
+      product_type,
       plan,
       payment_method,
     } = req.body;
 
     const existing = db
       .prepare(
-        "SELECT id, status FROM subscribers WHERE email = ? COLLATE NOCASE",
+        "SELECT id, status FROM subscribers WHERE email = ? COLLATE NOCASE AND product_type = ?",
       )
-      .get(email);
+      .get(email, product_type);
     if (existing) {
       return res.status(409).json({
         message:
@@ -54,13 +55,13 @@ exports.checkout = (req, res) => {
     }
 
     const amount = 0;
-    const subdomain = createAvailableSubdomain(business_name || name);
+    const subdomain = createAvailableSubdomain(business_name || name, product_type);
 
     const result = db
       .prepare(
         `
-      INSERT INTO subscribers (name, email, whatsapp, business_name, business_type, subdomain, plan, payment_method, amount, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+      INSERT INTO subscribers (name, email, whatsapp, business_name, business_type, product_type, subdomain, plan, payment_method, amount, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
     `,
       )
       .run(
@@ -69,6 +70,7 @@ exports.checkout = (req, res) => {
         whatsapp,
         business_name || null,
         business_type || null,
+        product_type,
         subdomain,
         plan || "lifetime",
         payment_method || "free",
@@ -77,7 +79,7 @@ exports.checkout = (req, res) => {
 
     const sub = db
       .prepare(
-        "SELECT id, name, email, whatsapp, business_name, subdomain, plan, payment_method, amount, status, created_at FROM subscribers WHERE id = ?",
+        "SELECT id, name, email, whatsapp, business_name, business_type, product_type, subdomain, plan, payment_method, amount, status, created_at FROM subscribers WHERE id = ?",
       )
       .get(result.lastInsertRowid);
 

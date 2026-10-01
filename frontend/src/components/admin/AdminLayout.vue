@@ -5,7 +5,7 @@
       :class="{ open: mobileOpen, collapsed: sidebarCollapsed }"
     >
       <router-link to="/admin/dashboard" class="sidebar-brand"
-        ><span><Boxes :size="19" /></span
+        ><span>R.</span
         ><strong v-if="!sidebarCollapsed">RentalKu</strong></router-link
       >
       <p v-if="!sidebarCollapsed" class="workspace-label">Platform workspace</p>
@@ -93,7 +93,7 @@
 import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
-  Boxes,
+  CalendarDays,
   LayoutDashboard,
   LogOut,
   Moon,
@@ -114,7 +114,8 @@ const mobileOpen = ref(false);
 const showLogoutModal = ref(false);
 const navItems = [
   { path: "/admin/dashboard", label: "Overview", icon: LayoutDashboard },
-  { path: "/admin/subscribers", label: "Subscriber", icon: Users },
+  { path: "/admin/rental", label: "Customer Rental", icon: Users },
+  { path: "/admin/booking", label: "Customer Booking", icon: CalendarDays },
 ];
 const currentPageTitle = computed(
   () => navItems.find((item) => item.path === route.path)?.label || "Admin",
@@ -151,7 +152,8 @@ function executeLogout() {
   flex-direction: column;
   padding: 20px 12px 12px;
   background: var(--admin-sidebar);
-  color: #e6eeea;
+  color: var(--text-primary);
+  border-right: 1px solid var(--sidebar-border);
   transition:
     width 0.2s,
     transform 0.2s;
@@ -175,12 +177,12 @@ function executeLogout() {
   flex: 0 0 29px;
   place-items: center;
   border-radius: 5px;
-  background: #70d1c0;
-  color: #16332e;
+  background: var(--sidebar-brand);
+  color: var(--sidebar-brand-text);
 }
 .workspace-label {
   margin: 22px 8px 8px;
-  color: #91a59b;
+  color: var(--sidebar-muted);
   font-size: 0.67rem;
   font-weight: 700;
   letter-spacing: 0.07em;
@@ -200,19 +202,19 @@ function executeLogout() {
   gap: 11px;
   padding: 0 10px;
   border-radius: 5px;
-  color: #b9c9c0;
+  color: var(--sidebar-text);
   font-size: 0.88rem;
   font-weight: 700;
   text-align: left;
   background: transparent;
 }
 .nav-item:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.07);
+  color: var(--text-primary);
+  background: var(--sidebar-hover);
 }
 .nav-item.router-link-active {
-  color: #15332d;
-  background: #d8f1eb;
+  color: var(--sidebar-active-text);
+  background: var(--sidebar-active);
 }
 .sidebar.collapsed .nav-item {
   justify-content: center;
@@ -221,7 +223,7 @@ function executeLogout() {
 .logout {
   width: 100%;
   margin-top: auto;
-  color: #e6a7a0;
+  color: var(--sidebar-logout);
 }
 .admin-main {
   min-height: 100vh;

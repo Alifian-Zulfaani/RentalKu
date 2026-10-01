@@ -116,4 +116,12 @@ if (existingSubs === 0) {
   console.log(`✅ ${subs.length} subscribers seeded`);
 }
 
+const bookingDemo = db.prepare("SELECT 1 FROM subscribers WHERE product_type = 'booking' LIMIT 1").get();
+if (!bookingDemo) {
+  db.prepare(`INSERT INTO subscribers (name, email, whatsapp, business_name, business_type, product_type, subdomain, plan, payment_method, amount, status) VALUES (?, ?, ?, ?, ?, 'booking', ?, 'lifetime', 'free', 0, 'pending')`).run(
+    "Naya Putri", "naya@studiosenja.example", "081234567891", "Studio Senja", "Jasa fotografi", "studio-senja"
+  );
+  console.log("✅ Booking demo subscriber seeded");
+}
+
 console.log("🎉 Company seeding complete!");

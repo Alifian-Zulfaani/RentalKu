@@ -27,6 +27,9 @@ router.post(
     .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage("Jenis bisnis wajib diisi"),
+  body("product_type")
+    .isIn(["rental", "booking"])
+    .withMessage("Pilih produk Rental atau Booking"),
   body("plan")
     .optional()
     .equals("lifetime")

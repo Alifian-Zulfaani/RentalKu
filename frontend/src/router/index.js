@@ -7,9 +7,9 @@ const routes = [
     component: () => import("../views/public/LandingPage.vue"),
     meta: {
       seo: {
-        title: "RentalKu | Platform Manajemen Rental untuk Bisnis Indonesia",
+        title: "RentalKu | Aplikasi Rental dan Booking untuk Bisnis Indonesia",
         description:
-          "Kelola order, inventaris, dan pelanggan rental dalam satu workspace yang rapi. Akses lifetime untuk bisnis rental Indonesia.",
+          "Dua aplikasi untuk bisnis rental dan jasa berbasis jadwal: kelola barang, reservasi, pelanggan, dan operasional dalam ekosistem RentalKu.",
       },
     },
   },
@@ -19,9 +19,9 @@ const routes = [
     component: () => import("../views/public/OrderPage.vue"),
     meta: {
       seo: {
-        title: "Daftarkan Bisnis Rental | RentalKu",
+        title: "Daftarkan Bisnis Rental atau Booking | RentalKu",
         description:
-          "Daftarkan bisnis rental Anda dan mulai kelola operasional, inventaris, serta pelanggan dalam RentalKu.",
+          "Pilih aplikasi Rental atau Booking dan daftarkan bisnis Anda ke RentalKu.",
       },
     },
   },
@@ -43,10 +43,16 @@ const routes = [
         component: () => import("../views/admin/DashboardPage.vue"),
       },
       {
-        path: "subscribers",
-        name: "Subscribers",
+        path: "rental",
+        name: "RentalSubscribers",
         component: () => import("../views/admin/SubscriberPage.vue"),
       },
+      {
+        path: "booking",
+        name: "BookingSubscribers",
+        component: () => import("../views/admin/SubscriberPage.vue"),
+      },
+      { path: "subscribers", redirect: "/admin/rental" },
     ],
   },
   { path: "/:pathMatch(.*)*", redirect: "/" },

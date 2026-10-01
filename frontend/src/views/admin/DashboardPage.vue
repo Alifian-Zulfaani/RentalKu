@@ -10,9 +10,9 @@
         </p>
       </div>
       <router-link
-        to="/admin/subscribers?status=pending"
+        to="/admin/rental"
         class="btn btn-primary"
-        >Tinjau pendaftaran <ArrowRight :size="17"
+        >Customer Rental <ArrowRight :size="17"
       /></router-link>
     </section>
 
@@ -31,22 +31,26 @@
       </article>
     </div>
 
+    <div class="product-overview">
+      <router-link to="/admin/rental" class="product-overview-card"><span>APLIKASI RENTAL</span><strong>{{ stats.byProduct?.rental?.total || 0 }} customer</strong><small>{{ stats.byProduct?.rental?.pending || 0 }} menunggu review</small><ArrowUpRight :size="18" /></router-link>
+      <router-link to="/admin/booking" class="product-overview-card"><span>APLIKASI BOOKING</span><strong>{{ stats.byProduct?.booking?.total || 0 }} customer</strong><small>{{ stats.byProduct?.booking?.pending || 0 }} menunggu review</small><ArrowUpRight :size="18" /></router-link>
+    </div>
+
     <section class="attention-panel">
       <div class="attention-copy">
         <span class="attention-icon"><Clock3 :size="20" /></span>
         <div>
           <strong>{{ stats.pending }} pendaftaran menunggu keputusan</strong>
           <p>
-            Setiap persetujuan membuat bisnis rental siap masuk ke proses
+            Setiap persetujuan membuat bisnis siap masuk ke proses
             onboarding.
           </p>
         </div>
       </div>
-      <router-link
-        to="/admin/subscribers?status=pending"
-        class="btn btn-secondary btn-sm"
-        >Buka antrean</router-link
-      >
+      <div class="attention-actions">
+        <router-link to="/admin/rental?status=pending" class="btn btn-secondary btn-sm">Tinjau Rental</router-link>
+        <router-link to="/admin/booking?status=pending" class="btn btn-secondary btn-sm">Tinjau Booking</router-link>
+      </div>
     </section>
 
     <section class="recent-panel">
@@ -55,8 +59,8 @@
           <h3>Subscriber terbaru</h3>
           <p>Pendaftaran terakhir yang masuk ke platform.</p>
         </div>
-        <router-link to="/admin/subscribers" class="panel-link"
-          >Semua subscriber <ArrowUpRight :size="16"
+        <router-link to="/admin/booking" class="panel-link"
+          >Customer Booking <ArrowUpRight :size="16"
         /></router-link>
       </div>
       <div class="table-wrap">
@@ -64,6 +68,7 @@
           <thead>
             <tr>
               <th>Bisnis & pemilik</th>
+              <th>Produk</th>
               <th>Metode</th>
               <th class="align-right">Nilai</th>
               <th>Status</th>
@@ -81,6 +86,7 @@
                 }}</strong
                 ><small>{{ subscriber.name }} · {{ subscriber.email }}</small>
               </td>
+              <td>{{ subscriber.product_type === "booking" ? "Booking" : "Rental" }}</td>
               <td>
                 <span class="method-label">{{
                   subscriber.payment_method || "-"
@@ -99,7 +105,7 @@
               <td>{{ formatDate(subscriber.created_at) }}</td>
             </tr>
             <tr v-if="!stats.recentSubscribers.length">
-              <td colspan="5" class="empty-state">
+              <td colspan="6" class="empty-state">
                 Belum ada subscriber yang terdaftar.
               </td>
             </tr>
@@ -136,6 +142,7 @@ const stats = reactive({
   rejected: 0,
   totalRevenue: 0,
   recentSubscribers: [],
+  byProduct: { rental: { total: 0, pending: 0 }, booking: { total: 0, pending: 0 } },
 });
 const error = ref("");
 const statCards = [
@@ -190,6 +197,14 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.product-overview { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px }
+.product-overview-card { position:relative;display:grid;gap:5px;padding:21px;border:1px solid var(--border-color);border-radius:8px;background:var(--surface) }
+.product-overview-card span { color:var(--accent-primary);font-size:.7rem;font-weight:800;letter-spacing:.08em }
+.product-overview-card strong { font-family:var(--font-display);font-size:1.1rem }
+.product-overview-card small { color:var(--text-secondary) }
+.product-overview-card svg { position:absolute;right:20px;top:20px;color:var(--accent-primary) }
+.attention-actions { display:flex;gap:8px;flex-wrap:wrap }
+@media(max-width:620px){.product-overview{grid-template-columns:1fr}}
 .dashboard-page {
   display: grid;
   gap: 22px;

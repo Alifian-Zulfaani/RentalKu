@@ -16,6 +16,9 @@ router.get(
   query("status")
     .optional({ checkFalsy: true })
     .isIn(["pending", "confirmed", "rejected"]),
+  query("product_type")
+    .optional()
+    .isIn(["rental", "booking"]),
   query("page").optional().isInt({ min: 1 }).toInt(),
   query("limit").optional().isInt({ min: 1, max: 100 }).toInt(),
   sendValidationErrors,

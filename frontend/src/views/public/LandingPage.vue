@@ -6,14 +6,24 @@
     <section class="signal-strip">
       <div class="container signal-grid">
         <div>
-          <strong>1 ruang kerja</strong><span>untuk seluruh operasional</span>
+          <strong>2 aplikasi</strong><span>untuk rental dan booking</span>
         </div>
-        <div><strong>Realtime</strong><span>stok dan status order</span></div>
+        <div><strong>Realtime</strong><span>stok dan slot jadwal</span></div>
         <div>
-          <strong>Lifetime</strong><span>sekali bayar, seterusnya pakai</span>
+          <strong>Publik + admin</strong><span>untuk tiap bisnis</span>
         </div>
         <div>
-          <strong>Manusiawi</strong><span>dibuat untuk kerja harian</span>
+          <strong>Early access</strong><span>pendaftaran gratis</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="produk" class="section products-section">
+      <div class="container">
+        <div class="section-heading"><p class="eyebrow">Pilih alur yang tepat</p><h2>Dua produk untuk dua cara bisnis melayani pelanggan.</h2><p>Sewa barang dan pesan jasa membutuhkan aturan ketersediaan yang berbeda. RentalKu menyediakan aplikasi khusus untuk masing-masing.</p></div>
+        <div class="product-grid">
+          <article class="product-card rental-card"><span class="product-index">01 / RENTAL</span><PackageCheck :size="27" /><h3>RentalKu Rental</h3><p>Untuk penyewaan alat outdoor, kamera, perlengkapan acara, dan barang lain. Tampilkan katalog, kelola jumlah stok, lalu pantau order dari masuk hingga selesai.</p><ul><li><Check :size="16" /> Katalog dan detail barang</li><li><Check :size="16" /> Stok serta tarif sewa</li><li><Check :size="16" /> Form dan status order</li></ul><router-link to="/order?product=rental">Pilih Rental <ArrowUpRight :size="16" /></router-link></article>
+          <article class="product-card booking-card"><span class="product-index">02 / BOOKING</span><CalendarDays :size="27" /><h3>RentalKu Booking</h3><p>Untuk studio foto dan penyedia jasa yang bekerja berdasarkan waktu. Tampilkan profil studio serta fotografer, buka slot yang tersedia, dan terima reservasi tanpa bentrok.</p><ul><li><Check :size="16" /> Kalender ketersediaan</li><li><Check :size="16" /> Profil studio dan profesional</li><li><Check :size="16" /> Slot terisi otomatis terkunci</li></ul><router-link to="/order?product=booking">Pilih Booking <ArrowUpRight :size="16" /></router-link></article>
         </div>
       </div>
     </section>
@@ -22,10 +32,9 @@
       <div class="container">
         <div class="section-heading">
           <p class="eyebrow">Rapi dari hal yang penting</p>
-          <h2>Operasional rental, tanpa keruwetan tambahan.</h2>
+          <h2>Ruang kerja yang memahami apa yang Anda jual.</h2>
           <p>
-            Setiap layar dibuat untuk membantu Anda tahu apa yang perlu
-            dikerjakan sekarang, bukan sekadar menampilkan lebih banyak angka.
+            Kelola barang ketika pelanggan menyewa alat, atau kelola waktu ketika pelanggan memesan jasa.
           </p>
         </div>
         <div class="feature-grid">
@@ -53,10 +62,9 @@
       <div class="container workflow-grid">
         <div>
           <p class="eyebrow">Mulai tanpa drama</p>
-          <h2>Satu alur sederhana, untuk hari kerja yang lebih tenang.</h2>
+          <h2>Mulai dari produk yang sesuai dengan pekerjaan Anda.</h2>
           <p class="workflow-copy">
-            RentalKu disusun mengikuti cara pemilik rental bekerja: data masuk,
-            order bergerak, barang kembali, dan keputusan jadi lebih jelas.
+            Pilih Rental atau Booking, daftarkan bisnis, lalu atur layanan dan pelanggan dari panel yang sesuai.
           </p>
           <router-link to="/order" class="btn btn-outline"
             >Daftarkan bisnis <ArrowUpRight :size="17"
@@ -80,8 +88,7 @@
           <p class="eyebrow">Early access RentalKu</p>
           <h2>Mulai gratis, sambil kami tumbuh bersama pasar.</h2>
           <p>
-            Akses awal dibuka tanpa biaya agar kami bisa belajar dari alur kerja
-            bisnis rental yang nyata sebelum menentukan model berbayar.
+            Pendaftaran untuk kedua aplikasi dibuka gratis selama tahap awal. Pilih produk yang sesuai dengan bisnis Anda.
           </p>
         </div>
         <article class="pricing-card">
@@ -124,19 +131,19 @@
     <footer class="site-footer">
       <div class="container footer-main">
         <router-link to="/" class="footer-brand"
-          ><span><Boxes :size="18" /></span>RentalKu</router-link
+          ><span>R.</span>RentalKu</router-link
         >
         <p>
-          Sistem kerja yang lebih rapi untuk bisnis rental yang sedang
+          Sistem kerja yang lebih rapi untuk bisnis rental dan jasa yang sedang
           bertumbuh.
         </p>
         <div class="footer-links">
-          <a href="#fitur">Produk</a><a href="#harga">Harga</a
+          <a href="#produk">Produk</a><a href="#harga">Harga</a
           ><router-link to="/admin/login">Admin</router-link>
         </div>
       </div>
       <div class="container footer-bottom">
-        RentalKu · Platform manajemen rental
+        RentalKu · Aplikasi rental dan booking
       </div>
     </footer>
   </div>
@@ -146,7 +153,7 @@
 import {
   ArrowRight,
   ArrowUpRight,
-  Boxes,
+  CalendarDays,
   Check,
   ChevronDown,
   ClipboardList,
@@ -160,31 +167,31 @@ import HeroSection from "../../components/public/HeroSection.vue";
 const features = [
   {
     icon: ClipboardList,
-    title: "Order yang punya konteks",
+    title: "Pesanan yang punya konteks",
     description:
-      "Lihat siapa menyewa, barang apa yang keluar, dan tahap order saat ini tanpa pindah-pindah catatan.",
-    details: ["Status rental yang jelas", "Catatan per transaksi"],
+      "Lihat siapa pelanggan Anda, layanan atau barang yang dipilih, dan status pesanannya tanpa pindah catatan.",
+    details: ["Status yang jelas", "Catatan per transaksi"],
   },
   {
     icon: PackageCheck,
-    title: "Inventaris yang bisa dipercaya",
+    title: "Ketersediaan yang bisa dipercaya",
     description:
-      "Pantau barang yang siap sewa dan yang sedang berada di tangan pelanggan dengan satu sumber data.",
-    details: ["Ketersediaan stok", "Kategori dan tarif"],
+      "Stok barang untuk Rental dan slot waktu untuk Booking dikelola sesuai aturan masing-masing produk.",
+    details: ["Stok atau slot", "Kategori dan tarif"],
   },
   {
     icon: UsersRound,
     title: "Pelanggan tidak lagi anonim",
     description:
       "Simpan riwayat yang membantu tim melayani pelanggan lama dengan lebih cepat dan konsisten.",
-    details: ["Riwayat penyewaan", "Data kontak terpusat"],
+    details: ["Riwayat pesanan", "Data kontak terpusat"],
   },
   {
     icon: WalletCards,
     title: "Angka yang tidak terlambat",
     description:
       "Ringkas nilai transaksi dan aktivitas bisnis supaya Anda tidak menunggu rekap manual untuk melihat kondisi usaha.",
-    details: ["Ringkasan pendapatan", "Status pembayaran"],
+    details: ["Ringkasan transaksi", "Aktivitas terbaru"],
   },
 ];
 const steps = [
@@ -201,14 +208,14 @@ const steps = [
   {
     title: "Mulai atur operasional",
     description:
-      "Akses workspace dan susun proses rental dengan data yang lebih terstruktur.",
+      "Akses aplikasi yang dipilih dan susun operasional dengan data yang lebih terstruktur.",
   },
 ];
 const planItems = [
   "Manajemen order dan pelanggan",
-  "Inventaris dan ketersediaan barang",
-  "Halaman booking bisnis",
-  "Laporan operasional",
+  "Katalog barang atau layanan jasa",
+  "Ketersediaan stok atau kalender",
+  "Ringkasan operasional",
   "Dukungan melalui WhatsApp",
   "Pembaruan fitur berikutnya",
 ];
@@ -216,12 +223,12 @@ const faqs = [
   {
     question: "Apakah ada biaya untuk bergabung sekarang?",
     answer:
-      "Belum ada. RentalKu sedang membuka early access gratis untuk memahami kebutuhan pasar rental sebelum menentukan model berbayar.",
+      "Belum ada. RentalKu sedang membuka early access gratis untuk aplikasi Rental dan Booking sebelum menentukan model berbayar.",
   },
   {
-    question: "Apakah bisa dipakai untuk berbagai jenis rental?",
+    question: "Apa beda Rental dan Booking?",
     answer:
-      "Bisa. Alur RentalKu dirancang untuk kebutuhan rental secara umum, mulai dari alat outdoor sampai perlengkapan acara atau kendaraan.",
+      "Rental dirancang untuk barang yang punya jumlah stok dan masa sewa. Booking dirancang untuk layanan berbasis waktu, misalnya sesi fotografi dengan fotografer dan slot kalender.",
   },
   {
     question: "Kapan akses bisnis saya aktif?",
@@ -231,12 +238,21 @@ const faqs = [
   {
     question: "Apakah data bisnis saya terpisah?",
     answer:
-      "Ya. Setiap bisnis rental memiliki ruang data operasionalnya sendiri agar data pelanggan dan inventaris tetap terisolasi.",
+      "Ya. Aplikasi bisnis memakai basis data operasional terpisah dari data pendaftaran platform.",
   },
 ];
 </script>
 
 <style scoped>
+.products-section { background: var(--bg-secondary); }
+.product-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.product-card { display: flex; flex-direction: column; align-items: flex-start; min-height: 390px; padding: 30px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--surface); }
+.product-card > svg { margin: 22px 0 16px; color: var(--accent-primary); }
+.product-index { color: var(--text-muted); font-size: .72rem; font-weight: 800; letter-spacing: .09em; }
+.product-card h3 { font-size: 1.7rem; }.product-card p { max-width: 480px; margin-top: 11px; color: var(--text-secondary); font-size: .92rem; }
+.product-card ul { display: grid; gap: 8px; margin: 18px 0 24px; color: var(--text-secondary); font-size: .82rem; }.product-card li { display: flex; align-items: center; gap: 8px; }.product-card li svg { color: var(--accent-primary); }
+.product-card a { display: inline-flex; align-items: center; gap: 7px; margin-top: auto; color: var(--accent-primary); font-weight: 800; }.product-card a:hover { text-decoration: underline; }
+.booking-card { background: color-mix(in srgb, var(--surface) 88%, var(--accent-soft)); }
 .signal-strip {
   border-bottom: 1px solid var(--border-color);
   background: var(--surface);
@@ -528,6 +544,7 @@ const faqs = [
   font-size: 0.72rem;
 }
 @media (max-width: 900px) {
+  .product-grid { grid-template-columns: 1fr; }
   .feature-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -548,6 +565,7 @@ const faqs = [
   }
 }
 @media (max-width: 620px) {
+  .product-card { min-height: auto; padding: 24px; }
   .signal-grid {
     grid-template-columns: repeat(2, 1fr);
   }

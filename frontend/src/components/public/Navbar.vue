@@ -2,7 +2,7 @@
   <header class="site-header" :class="{ compact: isScrolled }">
     <div class="container nav-inner">
       <router-link to="/" class="brand" aria-label="RentalKu">
-        <span class="brand-mark"><Boxes :size="20" /></span>
+        <span class="brand-mark">R.</span>
         <span>RentalKu</span>
       </router-link>
       <nav
@@ -10,7 +10,7 @@
         :class="{ open: menuOpen }"
         aria-label="Navigasi utama"
       >
-        <a href="#fitur" @click="closeMenu">Produk</a>
+        <a href="#produk" @click="closeMenu">Produk</a>
         <a href="#cara-kerja" @click="closeMenu">Cara kerja</a>
         <a href="#harga" @click="closeMenu">Harga</a>
         <a href="#faq" @click="closeMenu">FAQ</a>
@@ -29,7 +29,7 @@
           >Masuk admin</router-link
         >
         <router-link to="/order" class="btn btn-primary btn-sm hide-mobile"
-          >Coba RentalKu <ArrowUpRight :size="16"
+          >Daftar gratis <ArrowUpRight :size="16"
         /></router-link>
         <button
           class="icon-button menu-button hide-desktop"
@@ -47,7 +47,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { ArrowUpRight, Boxes, Menu, Moon, Sun, X } from "lucide-vue-next";
+import { ArrowUpRight, Menu, Moon, Sun, X } from "lucide-vue-next";
 import { useThemeStore } from "../../stores/theme";
 
 const themeStore = useThemeStore();
@@ -102,6 +102,8 @@ onBeforeUnmount(() => window.removeEventListener("scroll", onScroll));
   border-radius: 6px;
   background: var(--accent-primary);
   color: var(--accent-contrast);
+  font-family: var(--font-display);
+  font-weight: 800;
 }
 .nav-links {
   display: flex;

@@ -1,41 +1,29 @@
 # RentalKu
 
-RentalKu adalah ekosistem aplikasi rental yang memisahkan pengelolaan platform dari operasional setiap bisnis rental. Repositori ini berisi dua pasangan aplikasi frontend dan backend yang dapat dijalankan secara mandiri.
+RentalKu menyediakan dua aplikasi untuk bisnis dengan cara pemesanan berbeda: **Rental** untuk barang dan stok, serta **Booking** untuk jasa dan jadwal. Repositori ini memuat platform pendaftaran RentalKu dan dua aplikasi contoh yang berjalan terpisah.
 
-## Aplikasi
+| Aplikasi | Fungsi | Port lokal |
+| --- | --- | ---: |
+| [`frontend/`](frontend/) | Situs RentalKu, pemilihan produk, dan admin platform | `5173` |
+| [`backend/`](backend/) | API pendaftaran dan subscriber dua produk dalam satu tabel | `3000` |
+| [`rental-frontend/`](rental-frontend/) | Situs dan panel pengelola rental alat outdoor Summit Gear | `5174` |
+| [`rental-backend/`](rental-backend/) | API katalog, inventaris, order sewa, dan pengaturan rental | `3001` |
+| [`booking-frontend/`](booking-frontend/) | Situs studio/fotografer dan panel reservasi Studio Senja | `5175` |
+| [`booking-backend/`](booking-backend/) | API layanan, kalender ketersediaan, reservasi, dan jam kerja | `3002` |
 
-| Direktori | Peran | Teknologi utama | Port lokal |
-| --- | --- | --- | ---: |
-| [`frontend/`](frontend/) | Situs RentalKu, pendaftaran calon pengguna, dan panel admin platform | Vue 3, Vite, Pinia | `5173` |
-| [`backend/`](backend/) | API autentikasi admin dan pengelolaan subscriber platform | Express, SQLite, JWT | `3000` |
-| [`customer-frontend/`](customer-frontend/) | Situs publik dan panel pengelola untuk satu bisnis rental | Vue 3, Vite, Pinia | `5174` |
-| [`customer-backend/`](customer-backend/) | API katalog, booking, inventaris, pelanggan, order, dan pengaturan toko | Express, SQLite, JWT | `3001` |
+Semua frontend memakai Vue 3 dan Vite. Semua backend memakai Express dan SQLite. Setiap pasangan aplikasi memiliki konfigurasi dan basis data sendiri.
 
-## Alur aplikasi
+## Alur singkat
 
-### Platform RentalKu
+Di situs platform, calon pengguna memilih Rental atau Booking sebelum mengirim pendaftaran. Backend platform menyimpan keduanya pada tabel `subscribers` dengan `product_type`. Data lama otomatis diberi tipe `rental`. Admin platform memiliki menu Customer Rental dan Customer Booking yang memfilter tabel yang sama.
 
-`frontend` dan `backend` digunakan oleh pengelola RentalKu. Area publik memperkenalkan layanan dan menerima pendaftaran bisnis rental, sedangkan area admin menyediakan ringkasan serta pengelolaan data subscriber. Endpoint admin dilindungi dengan autentikasi JWT.
+Contoh Rental, **Summit Gear**, menampilkan profil dan katalog alat outdoor, detail barang dalam modal, serta form sewa dua langkah. Panel admin mengelola inventaris, pelanggan, order, dan pengaturan situs.
 
-### Aplikasi bisnis rental
+Contoh Booking, **Studio Senja**, menampilkan landing page studio dan landing page personal tiap fotografer dari satu frontend. Jadwal dan harga paket bisa berbeda per fotografer. Kalender menghitung slot dari jam kerja, durasi layanan, reservasi, serta blokir admin; reservasi yang bertabrakan ditolak backend. Panel admin memiliki role studio dan fotografer dengan cakupan data serta menu yang berbeda.
 
-`customer-frontend` dan `customer-backend` merupakan aplikasi operasional untuk satu bisnis rental, dengan contoh identitas **Summit Gear**.
+## Menjalankan lokal
 
-- Area publik berfokus pada profil bisnis dan katalog alat outdoor.
-- Detail produk ditampilkan melalui modal agar pelanggan dapat memeriksa barang tanpa kehilangan konteks.
-- Pemesanan memakai alur dua langkah: memilih barang dan jumlah, lalu melengkapi data penyewa serta tanggal sewa.
-- Form memiliki validasi per kolom, ringkasan biaya, serta umpan balik error dari API.
-- Panel admin mencakup dashboard, inventaris, pelanggan, order, dan pengaturan web.
-- Tabel admin mendukung pagination, perataan data sesuai jenisnya, label status berbahasa Indonesia, dan aksi yang jelas.
-- Tema terang dan gelap diterapkan konsisten pada konten, header, dan sidebar.
-
-Stok booking diproses secara atomik oleh API. Basis data toko terpisah dari basis data platform agar data operasional tenant tidak bercampur dengan data subscriber RentalKu.
-
-## Menjalankan secara lokal
-
-Gunakan Node.js versi LTS yang kompatibel dengan dependensi proyek. Pada setiap direktori, instal dependensi dan salin `.env.example` menjadi `.env` sebelum menjalankan aplikasi.
-
-Jalankan API platform:
+Pada tiap folder, jalankan `npm install`, salin `.env.example` menjadi `.env`, lalu jalankan `npm run dev`. Mulai kedua backend contoh dengan `npm run seed` sekali untuk membuat data demo. Gunakan terminal terpisah untuk keenam aplikasi.
 
 ```powershell
 cd backend
@@ -45,61 +33,22 @@ npm run seed
 npm run dev
 ```
 
-Jalankan frontend platform pada terminal lain:
+Ulangi pada `rental-backend` dan `booking-backend`, kemudian jalankan `frontend`, `rental-frontend`, dan `booking-frontend` dengan `npm install` serta `npm run dev`. Sesuaikan port dan URL API melalui `.env.example` masing-masing aplikasi.
 
-```powershell
-cd frontend
-npm install
-Copy-Item .env.example .env
-npm run dev
-```
+Situs platform tersedia di `http://localhost:5173`, rental di `http://localhost:5174`, dan booking di `http://localhost:5175`. Contoh halaman booking:
 
-Jalankan API bisnis rental:
+- Studio: `http://localhost:5175/?tenant=studio`
+- Fotografer: `http://localhost:5175/?tenant=studio&pro=naya`
+- Admin booking: `http://localhost:5175/admin`
 
-```powershell
-cd customer-backend
-npm install
-Copy-Item .env.example .env
-npm run seed
-npm run dev
-```
+Di produksi, frontend booking membaca subdomain: `studio.booking.rentalku.id` untuk studio dan `naya.studio.booking.rentalku.id` untuk fotografer. Konfigurasi DNS wildcard, TLS untuk kedua tingkat host, dan rewrite SPA perlu disediakan oleh hosting. Rincian ada di [README Booking Frontend](booking-frontend/README.md).
 
-Jalankan frontend bisnis rental pada terminal lain:
+## Dokumentasi dan verifikasi
 
-```powershell
-cd customer-frontend
-npm install
-Copy-Item .env.example .env
-npm run dev
-```
+| Aplikasi | README | Kontrak API |
+| --- | --- | --- |
+| Platform | [Frontend](frontend/README.md) · [Backend](backend/README.md) | [Platform API](backend/docs/api-contract.md) |
+| Rental | [Frontend](rental-frontend/README.md) · [Backend](rental-backend/README.md) | [Rental API](rental-backend/docs/api-contract.md) |
+| Booking | [Frontend](booking-frontend/README.md) · [Backend](booking-backend/README.md) | [Booking API](booking-backend/docs/api-contract.md) |
 
-Setelah seluruh layanan aktif:
-
-- Platform RentalKu: `http://localhost:5173`
-- API platform: `http://localhost:3000`
-- Situs bisnis rental: `http://localhost:5174`
-- API bisnis rental: `http://localhost:3001`
-
-## Verifikasi
-
-```powershell
-cd frontend
-npm run build
-
-cd ../customer-frontend
-npm run build
-
-cd ../customer-backend
-npm test
-```
-
-## Dokumentasi lanjutan
-
-- [Frontend platform](frontend/README.md)
-- [Backend platform](backend/README.md)
-- [Kontrak API platform](backend/docs/api-contract.md)
-- [Frontend bisnis rental](customer-frontend/README.md)
-- [Backend bisnis rental](customer-backend/README.md)
-- [Kontrak API bisnis rental](customer-backend/docs/api-contract.md)
-
-Setiap pasangan frontend dan backend memakai konfigurasi serta basis data masing-masing. Atur `JWT_SECRET`, `CORS_ORIGIN`, alamat API frontend, dan lokasi database sesuai lingkungan sebelum digunakan di produksi.
+Jalankan `npm run build` di setiap frontend dan `npm test` di ketiga backend. Sebelum deploy, ganti kredensial contoh, atur `JWT_SECRET`, `CORS_ORIGIN`, alamat API, lokasi SQLite, dan zona waktu bisnis.
