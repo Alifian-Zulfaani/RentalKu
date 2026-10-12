@@ -4,7 +4,7 @@
       <div>
         <p class="section-index">KALENDER OPERASIONAL</p>
         <h2>Jadwal & ketersediaan</h2>
-        <p>Atur jam kerja rutin dan pengecualian jadwal dari satu tempat.</p>
+        <p>Atur jam operasional dan waktu ketika studio tidak menerima sesi.</p>
       </div>
     </section>
     <div class="admin-tabs" role="tablist" aria-label="Pengaturan jadwal">
@@ -20,7 +20,7 @@
         :class="{ active: tab === 'hours' }"
         @click="tab = 'hours'"
       >
-        Jam kerja mingguan
+        Jam operasional mingguan
       </button>
     </div>
     <BlocksPage v-if="tab === 'blocks'" />

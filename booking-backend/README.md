@@ -1,13 +1,13 @@
 # RentalKu Booking Backend
 
-API reservasi jasa berbasis jadwal untuk satu bisnis, dengan **Studio Senja** dan fotografernya sebagai data contoh. Dibangun dengan Express, SQLite (`better-sqlite3`), JWT, dan bcrypt.
+API reservasi jasa berbasis jadwal untuk satu bisnis, dengan **Studio Senja** sebagai contoh. Dibangun dengan Express, SQLite (`better-sqlite3`), JWT, dan bcrypt.
 
 ## Fitur
 
-- Profil studio, fotografer, layanan, paket, dan harga per fotografer.
-- Kalender ketersediaan dari jam kerja, durasi layanan, reservasi aktif, dan blokir admin.
+- MVP memakai satu kalender studio, layanan, bio/filosofi, dan portofolio yang dapat dikelola admin. Fitur fotografer tetap tersimpan untuk fase berikutnya.
+- Kalender ketersediaan dari jam operasional studio, durasi layanan, seluruh reservasi aktif, dan blokir admin.
 - Reservasi dalam transaksi SQLite; slot bentrok ditolak dan pembatalan membuka slot kembali.
-- Panel admin dengan role `company` (studio) dan `photographer`; cakupan data diperiksa dari database pada setiap request.
+- Panel admin dengan role `company` (studio) dan `photographer`; cakupan data diperiksa dari database pada setiap request. Perubahan kata sandi mewajibkan konfirmasi sandi baru yang sama.
 
 ## Menjalankan lokal
 
@@ -32,7 +32,7 @@ API berjalan di `http://localhost:3002/api`. Jalankan `booking-frontend/` di por
 
 ## Data awal
 
-Jalankan `npm run seed` untuk mengisi Studio Senja, fotografer Naya dan Arya, layanan, jadwal, serta akun contoh. Seed tidak diperlukan untuk menjalankan API, tetapi halaman contoh memerlukan data tersebut. Kredensial demo ada di kode seed dan harus diganti sebelum produksi.
+Jalankan `npm run seed` untuk mengisi Studio Senja, layanan, jadwal studio, karya contoh, dan akun admin. Data fotografer lama tetap dibuat untuk pengembangan fitur berikutnya. Seed tidak diperlukan untuk menjalankan API, tetapi halaman contoh memerlukan data tersebut. Kredensial demo ada di kode seed dan harus diganti sebelum produksi.
 
 ## Verifikasi
 
@@ -51,6 +51,7 @@ Strukturnya mengikuti backend RentalKu dan Summit Gear:
 - `src/services`: aturan booking, tenant, dan perhitungan ketersediaan.
 - `src/utils`: helper respons dan penanganan error HTTP.
 - `test`: pengujian integrasi kontrak API dan aturan bisnis.
+- `.agents/skills/studio-backend/SKILL.md`: konvensi kerja khusus API dan migrasi Studio Senja.
 
 ## Dokumentasi
 

@@ -43,15 +43,26 @@
         </router-link>
       </div>
       <div v-if="overview.recent.length" class="recent-list">
-        <div v-for="item in overview.recent" :key="item.id">
-          <span
-            ><strong>{{ item.customer_name }}</strong
-            ><small
+        <article
+          v-for="item in overview.recent"
+          :key="item.id"
+          class="recent-item"
+        >
+          <div class="recent-item-customer">
+            <strong>{{ item.customer_name }}</strong>
+            <small
               >{{ item.service_name }} · {{ item.professional_name }}</small
-            ></span
-          ><span>{{ item.date }} · {{ item.start_time }}</span
-          ><strong>{{ money(item.total) }}</strong>
-        </div>
+            >
+          </div>
+          <div class="recent-item-schedule">
+            <small class="recent-item-label">Jadwal</small>
+            <time>{{ dateTime(item.date, item.start_time) }}</time>
+          </div>
+          <div class="recent-item-total">
+            <small class="recent-item-label">Nilai</small>
+            <strong>{{ money(item.total) }}</strong>
+          </div>
+        </article>
       </div>
       <p v-else class="empty-time">Belum ada reservasi.</p>
     </section>
@@ -61,5 +72,6 @@
 <script setup>
 import { CalendarClock, Clock3, ShieldCheck } from "lucide-vue-next";
 import { useAdminContext } from "../../stores/context";
+import { dateTime } from "../../utils/formatters";
 const { overview, money } = useAdminContext();
 </script>

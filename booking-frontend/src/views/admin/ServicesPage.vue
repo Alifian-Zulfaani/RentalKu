@@ -76,13 +76,17 @@
         </thead>
         <tbody>
           <tr v-for="service in pagedServices" :key="service.id">
-            <td data-align="left">
+            <td data-align="left" data-label="Layanan">
               <strong>{{ service.name }}</strong
               ><small class="cell-subtitle">{{ service.description }}</small>
             </td>
-            <td data-align="center">{{ service.duration_minutes }} menit</td>
-            <td data-align="right">{{ money(service.price) }}</td>
-            <td data-align="center">
+            <td data-align="center" data-label="Durasi">
+              {{ service.duration_minutes }} menit
+            </td>
+            <td data-align="right" data-label="Harga dasar">
+              {{ money(service.price) }}
+            </td>
+            <td data-align="center" data-label="Status">
               <span
                 class="status-badge"
                 :class="
@@ -93,7 +97,7 @@
                 >{{ service.active ? "Aktif" : "Nonaktif" }}</span
               >
             </td>
-            <td data-align="center">
+            <td data-align="center" data-label="Aksi">
               <AdminActionButton
                 label="Edit"
                 tone="info"
@@ -120,89 +124,81 @@
       </div>
     </section>
     <Transition name="modal-fade">
-      <div
+      <AdminDialog
         v-if="selectedService"
-        class="booking-dialog-backdrop"
-        @click.self="selectedService = null"
+        dialog-class="service-edit-dialog"
+        title-id="service-edit-title"
+        close-label="Tutup editor layanan"
+        @close="selectedService = null"
       >
-        <section
-          class="booking-dialog service-edit-dialog"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="service-edit-title"
+        <template #header>
+          <p class="section-index">EDIT LAYANAN</p>
+          <h2 id="service-edit-title">{{ selectedService.name }}</h2>
+        </template>
+        <form
+          id="service-edit-form"
+          class="dialog-form"
+          @submit.prevent="updateService"
         >
-          <div class="booking-dialog-head">
-            <div>
-              <p class="section-index">EDIT LAYANAN</p>
-              <h2 id="service-edit-title">{{ selectedService.name }}</h2>
-            </div>
-            <button
-              type="button"
-              aria-label="Tutup"
-              @click="selectedService = null"
-            >
-              <X :size="19" />
-            </button>
-          </div>
-          <form class="dialog-form" @submit.prevent="updateService">
+          <label
+            >Nama layanan<input v-model.trim="selectedService.name" required
+          /></label>
+          <label
+            >Deskripsi<textarea
+              v-model.trim="selectedService.description"
+              rows="4"
+              required
+            ></textarea>
+          </label>
+          <div class="dialog-form-grid">
             <label
-              >Nama layanan<input v-model.trim="selectedService.name" required
-            /></label>
-            <label
-              >Deskripsi<textarea
-                v-model.trim="selectedService.description"
-                rows="4"
+              >Durasi<input
+                v-model.number="selectedService.duration_minutes"
+                type="number"
+                min="30"
+                max="480"
+                step="30"
+                required /></label
+            ><label
+              >Harga dasar<input
+                v-model.number="selectedService.price"
+                type="number"
+                min="0"
+                step="1000"
                 required
-              ></textarea>
-            </label>
-            <div class="dialog-form-grid">
-              <label
-                >Durasi<input
-                  v-model.number="selectedService.duration_minutes"
-                  type="number"
-                  min="30"
-                  max="480"
-                  step="30"
-                  required /></label
-              ><label
-                >Harga dasar<input
-                  v-model.number="selectedService.price"
-                  type="number"
-                  min="0"
-                  step="1000"
-                  required
-              /></label>
-            </div>
-            <label class="check-label"
-              ><input
-                v-model="selectedService.active"
-                type="checkbox"
-                :true-value="1"
-                :false-value="0"
-              />
-              Layanan aktif</label
-            >
-            <div class="cancellation-actions">
-              <button
-                type="button"
-                class="button secondary"
-                @click="selectedService = null"
-              >
-                Batal</button
-              ><button type="submit" class="button primary">
-                Simpan perubahan
-              </button>
-            </div>
-          </form>
-        </section>
-      </div>
+            /></label>
+          </div>
+          <label class="check-label"
+            ><input
+              v-model="selectedService.active"
+              type="checkbox"
+              :true-value="1"
+              :false-value="0"
+            />
+            Layanan aktif</label
+          >
+        </form>
+        <template #footer>
+          <button
+            type="button"
+            class="button secondary"
+            @click="selectedService = null"
+          >
+            Batal
+          </button>
+          <button type="submit" form="service-edit-form" class="button primary">
+            Simpan perubahan
+          </button>
+        </template>
+      </AdminDialog>
     </Transition>
   </div>
 </template>
 
 <script setup>
 import { computed, ref, watch } from "vue";
-import { Pencil, Plus, X } from "lucide-vue-next";
+import { Pencil, Plus } from "lucide-vue-next";
+import AdminDialog from "../../components/admin/AdminDialog.vue";
 import AdminActionButton from "../../components/admin/AdminActionButton.vue";
 import AdminDataTable from "../../components/admin/AdminDataTable.vue";
 import AdminPagination from "../../components/admin/AdminPagination.vue";

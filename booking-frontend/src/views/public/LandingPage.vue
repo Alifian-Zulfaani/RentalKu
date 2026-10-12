@@ -1,25 +1,9 @@
 <template>
   <div class="site-shell">
-    <header class="site-header">
-      <div class="wrap header-inner">
-        <a :href="studioHref" class="wordmark">
-          <BrandMark :name="site?.tenant.name || 'Studio Senja'" />
-        </a>
-        <nav aria-label="Navigasi utama">
-          <a href="#tentang">{{ site?.profile ? "Profil" : "Tentang" }}</a
-          ><a :href="site?.profile ? '#jadwal' : '#fotografer'">{{
-            site?.profile ? "Jadwal" : "Fotografer"
-          }}</a
-          ><a href="#layanan">{{
-            site?.profile ? "Paket & harga" : "Layanan"
-          }}</a>
-          <ThemeToggle />
-          <a href="#reservasi" class="nav-book"
-            >Reservasi <ArrowUpRight :size="16"
-          /></a>
-        </nav>
-      </div>
-    </header>
+    <PublicHeader
+      :name="site?.tenant.name || 'Studio Senja'"
+      :home-href="studioHref"
+    />
 
     <main v-if="loading" class="wrap state-message">
       Menyiapkan halaman studio…
@@ -29,10 +13,15 @@
       <p>{{ loadError }}</p>
     </main>
     <main v-else>
-      <PhotographerLanding v-if="site.profile" />
-      <StudioLanding v-else />
-
+      <template v-if="photographersEnabled">
+        <PhotographerLanding v-if="site.profile" />
+        <StudioLanding v-else />
+      </template>
       <ReservationSection />
+      <PortfolioPreview
+        v-if="!photographersEnabled"
+        :items="site.portfolio || []"
+      />
     </main>
     <footer class="footer">
       <div class="wrap">
@@ -42,7 +31,7 @@
       </div>
     </footer>
     <BookingConfirmModal
-      v-if="confirmationOpen && chosenService && chosenProfessional"
+      v-if="confirmationOpen && chosenService"
       :customer="form"
       :service="chosenService"
       :professional="chosenProfessional"
@@ -70,15 +59,6 @@ import {
   watch,
 } from "vue";
 import { useRouter } from "vue-router";
-import {
-  ArrowRight,
-  ArrowUpRight,
-  CalendarDays,
-  Camera,
-  ChevronLeft,
-  ChevronRight,
-  MapPin,
-} from "lucide-vue-next";
 import { api, apiError, siteContext } from "../../services/api";
 import { longDate, money } from "../../utils/formatters";
 import { publicContextKey } from "../../stores/context";
@@ -86,16 +66,17 @@ import BookingConfirmModal from "../../components/public/BookingConfirmModal.vue
 import PhotographerLanding from "../../components/public/PhotographerLanding.vue";
 import StudioLanding from "../../components/public/StudioLanding.vue";
 import ReservationSection from "../../components/public/ReservationSection.vue";
-import BrandMark from "../../components/shared/BrandMark.vue";
+import PortfolioPreview from "../../components/public/PortfolioPreview.vue";
+import { photographersEnabled } from "../../config/features";
+import PublicHeader from "../../components/public/PublicHeader.vue";
 import FloatingActions from "../../components/shared/FloatingActions.vue";
-import ThemeToggle from "../../components/shared/ThemeToggle.vue";
 
 const router = useRouter();
 const context = siteContext();
 const site = ref(null);
 const loading = ref(true);
 const loadError = ref("");
-const selectedPro = ref(context.pro || "");
+const selectedPro = ref(photographersEnabled ? context.pro || "" : "");
 const selectedService = ref(null);
 const month = ref(
   new Date().toLocaleDateString("en-CA", {
@@ -121,15 +102,6 @@ const form = reactive({
   notes: "",
 });
 const weekdays = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
-const fullWeekdays = [
-  "Minggu",
-  "Senin",
-  "Selasa",
-  "Rabu",
-  "Kamis",
-  "Jumat",
-  "Sabtu",
-];
 const monthLabel = computed(() =>
   new Intl.DateTimeFormat("id-ID", {
     month: "long",
@@ -140,11 +112,12 @@ const monthLabel = computed(() =>
 const calendarOffset = computed(() =>
   new Date(`${month.value}-01T00:00:00Z`).getUTCDay(),
 );
-const availableServices = computed(
-  () =>
-    site.value?.services.filter(
-      (item) => item.professional_id === chosenProfessional.value?.id,
-    ) || [],
+const availableServices = computed(() =>
+  photographersEnabled
+    ? site.value?.services.filter(
+        (item) => item.professional_id === chosenProfessional.value?.id,
+      ) || []
+    : site.value?.services || [],
 );
 const studioServices = computed(() => {
   const grouped = new Map();
@@ -198,7 +171,10 @@ function selectDay(day) {
   bookingError.value = "";
 }
 function chooseService(id) {
-  if (!availableServices.value.some((item) => item.id === id)) {
+  if (
+    photographersEnabled &&
+    !availableServices.value.some((item) => item.id === id)
+  ) {
     const offering = site.value?.services.find((item) => item.id === id);
     selectedPro.value =
       site.value?.professionals.find(
@@ -211,7 +187,11 @@ function chooseService(id) {
 let availabilityRequest = 0;
 async function fetchAvailability() {
   const request = ++availabilityRequest;
-  if (!site.value || !selectedPro.value || !selectedService.value) {
+  if (
+    !site.value ||
+    (photographersEnabled && !selectedPro.value) ||
+    !selectedService.value
+  ) {
     availability.value = [];
     availabilityLoading.value = false;
     selectedDate.value = "";
@@ -225,7 +205,7 @@ async function fetchAvailability() {
     const { data } = await api.get("/public/availability", {
       params: {
         tenant: context.tenant,
-        pro: selectedPro.value,
+        ...(photographersEnabled && { pro: selectedPro.value }),
         service: selectedService.value,
         month: month.value,
       },
@@ -244,7 +224,7 @@ function reviewBooking() {
     !selectedDate.value ||
     !selectedTime.value ||
     !chosenService.value ||
-    !chosenProfessional.value
+    (photographersEnabled && !chosenProfessional.value)
   ) {
     bookingError.value = "Pilih tanggal dan jam terlebih dahulu.";
     return;
@@ -258,7 +238,7 @@ async function confirmBooking() {
     const { data } = await api.post("/public/bookings", {
       ...form,
       tenant: context.tenant,
-      pro: selectedPro.value,
+      ...(photographersEnabled && { pro: selectedPro.value }),
       service_id: selectedService.value,
       date: selectedDate.value,
       start_time: selectedTime.value,
@@ -268,7 +248,7 @@ async function confirmBooking() {
       name: "booking-success",
       query: {
         tenant: context.tenant,
-        ...(context.pro && { pro: context.pro }),
+        ...(photographersEnabled && context.pro && { pro: context.pro }),
       },
       state: {
         confirmation: {
@@ -341,11 +321,13 @@ onMounted(async () => {
     const { data } = await api.get("/public/site", {
       params: {
         tenant: context.tenant,
-        ...(context.pro && { pro: context.pro }),
+        ...(photographersEnabled && context.pro && { pro: context.pro }),
       },
     });
     site.value = data;
-    selectedPro.value = data.profile?.slug || data.professionals[0]?.slug || "";
+    selectedPro.value = photographersEnabled
+      ? data.profile?.slug || data.professionals[0]?.slug || ""
+      : "";
     selectedService.value = availableServices.value[0]?.id || null;
     document.title = `${data.profile ? data.profile.name + " | " : ""}${data.tenant.name} — Reservasi fotografi`;
     await fetchAvailability();

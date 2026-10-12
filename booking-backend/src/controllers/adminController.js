@@ -15,6 +15,7 @@ const {
   today,
   slotsForDay,
   isAvailable,
+  isStudioAvailable,
 } = require("../services/schedulingService");
 const bcrypt = require("bcryptjs");
 const {
@@ -124,12 +125,19 @@ router.patch(
     if (
       booking.status === "cancelled" &&
       req.body.status !== "cancelled" &&
-      !isAvailable(
-        booking.professional_id,
-        booking.date,
-        booking.start_time,
-        booking.end_time,
-      )
+      !(booking.booking_scope === "studio"
+        ? isStudioAvailable(
+            req.tenantId,
+            booking.date,
+            booking.start_time,
+            booking.end_time,
+          )
+        : isAvailable(
+            booking.professional_id,
+            booking.date,
+            booking.start_time,
+            booking.end_time,
+          ))
     )
       error(409, "Slot sudah terisi oleh reservasi lain");
     db.prepare("UPDATE bookings SET status = ? WHERE id = ?").run(
@@ -144,7 +152,7 @@ router.get(
   route((req, res) => {
     const data = db
       .prepare(
-        `SELECT id, slug, name, title, bio, photo_url, headline, approach, active FROM professionals WHERE tenant_id = ?${req.professionalId ? " AND id = ?" : ""} ORDER BY id`,
+        `SELECT id, slug, name, title, bio, photo_url, headline, approach, active FROM professionals WHERE tenant_id = ? AND slug != '__studio__'${req.professionalId ? " AND id = ?" : ""} ORDER BY id`,
       )
       .all(
         ...(req.professionalId
@@ -231,6 +239,8 @@ router.patch(
       "whatsapp",
       "email",
       "hero_image_url",
+      "philosophy_title",
+      "philosophy_body",
     ];
     const previous = db
       .prepare("SELECT * FROM tenants WHERE id = ?")
@@ -244,7 +254,10 @@ router.patch(
       ]),
     );
     for (const field of fields.filter((field) => field !== "hero_image_url"))
-      if (!values[field] || values[field].length > 1000)
+      if (
+        (!values[field] && !field.startsWith("philosophy_")) ||
+        values[field].length > (field === "philosophy_title" ? 120 : 1000)
+      )
         error(422, `${field} tidak valid`, field);
     if (
       values.hero_image_url &&
@@ -253,7 +266,7 @@ router.patch(
     )
       error(422, "URL foto harus HTTPS atau path /images/", "hero_image_url");
     db.prepare(
-      "UPDATE tenants SET name = ?, tagline = ?, about = ?, location = ?, whatsapp = ?, email = ?, hero_image_url = ? WHERE id = ?",
+      "UPDATE tenants SET name = ?, tagline = ?, about = ?, location = ?, whatsapp = ?, email = ?, hero_image_url = ?, philosophy_title = ?, philosophy_body = ? WHERE id = ?",
     ).run(...fields.map((field) => values[field]), req.tenantId);
     res.json({
       message: "Profil studio disimpan",
@@ -535,10 +548,30 @@ router.patch(
       )
     )
       error(422, "Kata sandi saat ini salah", "current_password");
-    if (String(req.body.new_password || "").length < 8)
-      error(422, "Kata sandi baru minimal 8 karakter", "new_password");
+    const newPassword = req.body.new_password;
+    if (
+      typeof newPassword !== "string" ||
+      newPassword.length < 8 ||
+      newPassword.length > 128
+    )
+      error(422, "Kata sandi baru harus 8–128 karakter", "new_password");
+    if (
+      typeof req.body.new_password_confirmation !== "string" ||
+      req.body.new_password_confirmation !== newPassword
+    )
+      error(
+        422,
+        "Konfirmasi kata sandi baru tidak cocok",
+        "new_password_confirmation",
+      );
+    if (bcrypt.compareSync(newPassword, previous.password_hash))
+      error(
+        422,
+        "Kata sandi baru harus berbeda dari kata sandi saat ini",
+        "new_password",
+      );
     db.prepare("UPDATE admins SET password_hash = ? WHERE id = ?").run(
-      bcrypt.hashSync(req.body.new_password, 10),
+      bcrypt.hashSync(newPassword, 10),
       req.account.id,
     );
     res.json({ message: "Kata sandi diperbarui" });
@@ -609,6 +642,197 @@ router.delete(
       .run(req.params.id, req.tenantId);
     if (!result.changes) error(404, "Blokir tidak ditemukan");
     res.json({ message: "Blokir jadwal dihapus" });
+  }),
+);
+
+router.get(
+  "/studio/schedule",
+  company,
+  route((req, res) => {
+    const data = db
+      .prepare(
+        "SELECT weekday, start_time, end_time FROM studio_working_hours WHERE tenant_id = ? ORDER BY weekday",
+      )
+      .all(req.tenantId);
+    res.json({ data });
+  }),
+);
+router.put(
+  "/studio/schedule",
+  company,
+  route((req, res) => {
+    const schedule = req.body.schedule;
+    if (
+      !Array.isArray(schedule) ||
+      schedule.length > 7 ||
+      new Set(schedule.map((item) => item.weekday)).size !== schedule.length ||
+      schedule.some(
+        (item) =>
+          !Number.isInteger(item.weekday) ||
+          item.weekday < 0 ||
+          item.weekday > 6 ||
+          !timePattern.test(item.start_time) ||
+          !timePattern.test(item.end_time) ||
+          item.start_time >= item.end_time,
+      )
+    )
+      error(422, "Jam operasional studio tidak valid", "schedule");
+    db.transaction(() => {
+      db.prepare("DELETE FROM studio_working_hours WHERE tenant_id = ?").run(
+        req.tenantId,
+      );
+      const insert = db.prepare(
+        "INSERT INTO studio_working_hours (tenant_id, weekday, start_time, end_time) VALUES (?, ?, ?, ?)",
+      );
+      for (const item of schedule)
+        insert.run(req.tenantId, item.weekday, item.start_time, item.end_time);
+    })();
+    res.json({ message: "Jam operasional studio disimpan" });
+  }),
+);
+router.get(
+  "/studio/blocks",
+  company,
+  route((req, res) => {
+    const data = db
+      .prepare(
+        "SELECT * FROM studio_blocks WHERE tenant_id = ? AND date >= ? ORDER BY date, start_time",
+      )
+      .all(req.tenantId, today());
+    res.json({ data });
+  }),
+);
+router.post(
+  "/studio/blocks",
+  company,
+  route((req, res) => {
+    const { date, start_time, end_time, reason } = req.body;
+    if (
+      !validDate(date) ||
+      date < today() ||
+      !timePattern.test(start_time) ||
+      !timePattern.test(end_time) ||
+      start_time >= end_time
+    )
+      error(422, "Tanggal atau jam blokir tidak valid");
+    if (!isStudioAvailable(req.tenantId, date, start_time, end_time))
+      error(409, "Jadwal sudah terisi atau diblokir");
+    const result = db
+      .prepare(
+        "INSERT INTO studio_blocks (tenant_id, date, start_time, end_time, reason) VALUES (?, ?, ?, ?, ?)",
+      )
+      .run(
+        req.tenantId,
+        date,
+        start_time,
+        end_time,
+        String(reason || "").slice(0, 200),
+      );
+    res.status(201).json({
+      id: result.lastInsertRowid,
+      message: "Jadwal studio berhasil diblokir",
+    });
+  }),
+);
+router.delete(
+  "/studio/blocks/:id",
+  company,
+  route((req, res) => {
+    const result = db
+      .prepare("DELETE FROM studio_blocks WHERE id = ? AND tenant_id = ?")
+      .run(req.params.id, req.tenantId);
+    if (!result.changes) error(404, "Blokir tidak ditemukan");
+    res.json({ message: "Blokir jadwal dihapus" });
+  }),
+);
+router.get(
+  "/portfolio",
+  company,
+  route((req, res) => {
+    res.json({
+      data: db
+        .prepare(
+          "SELECT * FROM portfolio_items WHERE tenant_id = ? ORDER BY sort_order, id",
+        )
+        .all(req.tenantId),
+    });
+  }),
+);
+function portfolioInput(body) {
+  const title = String(body.title || "").trim();
+  const caption = String(body.caption || "").trim();
+  const imageUrl = String(body.image_url || "").trim();
+  const sortOrder = Number(body.sort_order ?? 0);
+  if (title.length < 2 || title.length > 100)
+    error(422, "Judul harus 2–100 karakter", "title");
+  if (caption.length > 300)
+    error(422, "Deskripsi maksimal 300 karakter", "caption");
+  if (
+    !/^https:\/\/[^\s]+$/i.test(imageUrl) &&
+    !/^\/images\/[\w./-]+$/.test(imageUrl)
+  )
+    error(422, "URL gambar harus HTTPS atau path /images/", "image_url");
+  if (!Number.isInteger(sortOrder) || sortOrder < 0 || sortOrder > 9999)
+    error(422, "Urutan tidak valid", "sort_order");
+  return {
+    title,
+    caption,
+    imageUrl,
+    sortOrder,
+    active: body.active === false || body.active === 0 ? 0 : 1,
+  };
+}
+router.post(
+  "/portfolio",
+  company,
+  route((req, res) => {
+    const item = portfolioInput(req.body);
+    const result = db
+      .prepare(
+        "INSERT INTO portfolio_items (tenant_id, title, caption, image_url, sort_order, active) VALUES (?, ?, ?, ?, ?, ?)",
+      )
+      .run(
+        req.tenantId,
+        item.title,
+        item.caption,
+        item.imageUrl,
+        item.sortOrder,
+        item.active,
+      );
+    res.status(201).json({
+      data: db
+        .prepare("SELECT * FROM portfolio_items WHERE id = ?")
+        .get(result.lastInsertRowid),
+      message: "Karya ditambahkan",
+    });
+  }),
+);
+router.patch(
+  "/portfolio/:id",
+  company,
+  route((req, res) => {
+    const existing = db
+      .prepare("SELECT * FROM portfolio_items WHERE id = ? AND tenant_id = ?")
+      .get(req.params.id, req.tenantId);
+    if (!existing) error(404, "Karya tidak ditemukan");
+    const item = portfolioInput({ ...existing, ...req.body });
+    db.prepare(
+      "UPDATE portfolio_items SET title = ?, caption = ?, image_url = ?, sort_order = ?, active = ? WHERE id = ? AND tenant_id = ?",
+    ).run(
+      item.title,
+      item.caption,
+      item.imageUrl,
+      item.sortOrder,
+      item.active,
+      existing.id,
+      req.tenantId,
+    );
+    res.json({
+      data: db
+        .prepare("SELECT * FROM portfolio_items WHERE id = ?")
+        .get(existing.id),
+      message: "Karya diperbarui",
+    });
   }),
 );
 

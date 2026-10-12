@@ -22,6 +22,18 @@
           rows="4"
           required
         ></textarea></label
+      ><label class="wide"
+        >Judul filosofi studio<input
+          v-model.trim="siteForm.philosophy_title"
+          maxlength="120"
+          placeholder="Cahaya terakhir, cerita yang terus hidup." /></label
+      ><label class="wide"
+        >Filosofi studio<textarea
+          v-model.trim="siteForm.philosophy_body"
+          rows="5"
+          maxlength="1000"
+          placeholder="Ceritakan pendekatan dan nilai Studio Senja."
+        ></textarea></label
       ><button type="submit" class="button primary">
         Simpan profil studio
       </button>

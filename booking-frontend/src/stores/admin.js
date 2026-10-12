@@ -13,10 +13,12 @@ import {
   Camera,
   LayoutDashboard,
   Package,
+  Images,
   Settings,
 } from "lucide-vue-next";
 import { api, apiError } from "../services/api";
 import { bookingStatusLabel, money } from "../utils/formatters";
+import { photographersEnabled } from "../config/features";
 
 export function useAdminStore() {
   const token = ref(sessionStorage.getItem("booking_admin_token") || "");
@@ -40,8 +42,7 @@ export function useAdminStore() {
       )?.name || "Fotografer",
   );
   const publicHref = computed(
-    () =>
-      `/?tenant=${encodeURIComponent(tenantSlug.value)}${!isCompany.value && professionals.value[0]?.slug ? `&pro=${encodeURIComponent(professionals.value[0].slug)}` : ""}`,
+    () => `/?tenant=${encodeURIComponent(tenantSlug.value)}`,
   );
   const navItems = computed(() =>
     isCompany.value
@@ -64,17 +65,31 @@ export function useAdminStore() {
             label: "Jadwal & ketersediaan",
             icon: CalendarRange,
           },
+          ...(photographersEnabled
+            ? [
+                {
+                  key: "team",
+                  path: "photographers",
+                  label: "Fotografer",
+                  icon: Camera,
+                },
+              ]
+            : []),
+          ...(photographersEnabled
+            ? [
+                {
+                  key: "services",
+                  path: "services",
+                  label: "Layanan studio",
+                  icon: Package,
+                },
+              ]
+            : []),
           {
-            key: "team",
-            path: "photographers",
-            label: "Fotografer",
-            icon: Camera,
-          },
-          {
-            key: "services",
-            path: "services",
-            label: "Layanan studio",
-            icon: Package,
+            key: "portfolio",
+            path: "portfolio",
+            label: "Portofolio",
+            icon: Images,
           },
           {
             key: "settings",
@@ -96,18 +111,26 @@ export function useAdminStore() {
             label: "Reservasi saya",
             icon: CalendarClock,
           },
-          {
-            key: "availability",
-            path: "availability",
-            label: "Jadwal & ketersediaan",
-            icon: CalendarRange,
-          },
-          {
-            key: "team",
-            path: "photographers",
-            label: "Profil & harga",
-            icon: Camera,
-          },
+          ...(photographersEnabled
+            ? [
+                {
+                  key: "availability",
+                  path: "availability",
+                  label: "Jadwal & ketersediaan",
+                  icon: CalendarRange,
+                },
+              ]
+            : []),
+          ...(photographersEnabled
+            ? [
+                {
+                  key: "team",
+                  path: "photographers",
+                  label: "Profil & harga",
+                  icon: Camera,
+                },
+              ]
+            : []),
           {
             key: "settings",
             path: "settings",
@@ -127,6 +150,7 @@ export function useAdminStore() {
         overview: "Pantau aktivitas dan reservasi terbaru.",
         bookings: "Tinjau dan perbarui status setiap reservasi.",
         availability: "Kelola jam kerja dan waktu yang tidak dapat dipesan.",
+        portfolio: "Kelola foto karya yang tampil di situs studio.",
         team: "Kelola profil dan kehadiran fotografer di situs.",
         services: "Susun katalog paket fotografi studio.",
         settings: "Kelola identitas studio, akses tim, dan keamanan akun.",
@@ -148,6 +172,8 @@ export function useAdminStore() {
   const pendingStatusChange = ref(null);
   const pendingBlockRemoval = ref(null);
   const blocks = ref([]);
+  const portfolio = ref([]);
+  const studioSchedule = reactive({});
   const professionals = ref([]);
   const services = ref([]);
   const offerings = ref([]);
@@ -158,7 +184,13 @@ export function useAdminStore() {
     password: "",
     professional_id: null,
   });
-  const passwordForm = reactive({ current_password: "", new_password: "" });
+  const passwordForm = reactive({
+    current_password: "",
+    new_password: "",
+    new_password_confirmation: "",
+  });
+  const passwordFieldErrors = reactive({});
+  const passwordBusy = ref(false);
   const siteForm = reactive({
     name: "",
     tagline: "",
@@ -167,6 +199,8 @@ export function useAdminStore() {
     email: "",
     whatsapp: "",
     hero_image_url: "",
+    philosophy_title: "",
+    philosophy_body: "",
   });
   const newProfessional = reactive({
     name: "",
@@ -242,8 +276,10 @@ export function useAdminStore() {
       tenantName.value = data.tenant.name;
       account.value = data.account;
       tenantSlug.value = data.tenant.slug;
+      return true;
     } catch (cause) {
       error.value = apiError(cause);
+      return false;
     } finally {
       busy.value = false;
     }
@@ -281,22 +317,34 @@ export function useAdminStore() {
       const [overviewResponse, blocksResponse, prosResponse] =
         await Promise.all([
           api.get("/admin/overview"),
-          api.get("/admin/blocks"),
+          api.get(isCompany.value ? "/admin/studio/blocks" : "/admin/blocks"),
           api.get("/admin/professionals"),
         ]);
       Object.assign(overview, overviewResponse.data);
       blocks.value = blocksResponse.data.data;
       professionals.value = prosResponse.data.data;
       if (isCompany.value) {
-        const [servicesResponse, siteResponse, accountsResponse] =
-          await Promise.all([
-            api.get("/admin/services"),
-            api.get("/admin/site"),
-            api.get("/admin/accounts"),
-          ]);
+        const [
+          servicesResponse,
+          siteResponse,
+          accountsResponse,
+          scheduleResponse,
+          portfolioResponse,
+        ] = await Promise.all([
+          api.get("/admin/services"),
+          api.get("/admin/site"),
+          api.get("/admin/accounts"),
+          api.get("/admin/studio/schedule"),
+          api.get("/admin/portfolio"),
+        ]);
         services.value = servicesResponse.data.data;
         Object.assign(siteForm, siteResponse.data);
         accounts.value = accountsResponse.data.data;
+        portfolio.value = portfolioResponse.data.data;
+        for (const key of Object.keys(studioSchedule))
+          delete studioSchedule[key];
+        for (const item of scheduleResponse.data.data)
+          studioSchedule[item.weekday] = { ...item };
       }
       selectedOfferingPro.value =
         selectedOfferingPro.value ||
@@ -360,12 +408,30 @@ export function useAdminStore() {
     }
   }
   async function changePassword() {
+    if (passwordBusy.value) return;
+    Object.keys(passwordFieldErrors).forEach(
+      (field) => delete passwordFieldErrors[field],
+    );
+    if (passwordForm.new_password !== passwordForm.new_password_confirmation) {
+      passwordFieldErrors.new_password_confirmation =
+        "Konfirmasi kata sandi belum sama.";
+      return;
+    }
+    passwordBusy.value = true;
     try {
       await api.patch("/admin/password", passwordForm);
-      Object.assign(passwordForm, { current_password: "", new_password: "" });
+      Object.assign(passwordForm, {
+        current_password: "",
+        new_password: "",
+        new_password_confirmation: "",
+      });
       notify("Kata sandi berhasil diperbarui.");
     } catch (cause) {
+      for (const item of cause.response?.data?.errors || [])
+        passwordFieldErrors[item.field] = item.message;
       notify(apiError(cause), "error");
+    } finally {
+      passwordBusy.value = false;
     }
   }
   function requestStatusChange(item, status) {
@@ -388,10 +454,15 @@ export function useAdminStore() {
   }
   async function addBlock() {
     try {
-      await api.post("/admin/blocks", blockForm);
+      await api.post(
+        isCompany.value ? "/admin/studio/blocks" : "/admin/blocks",
+        blockForm,
+      );
       notify("Jadwal berhasil diblokir.");
       blockForm.reason = "";
-      const { data } = await api.get("/admin/blocks");
+      const { data } = await api.get(
+        isCompany.value ? "/admin/studio/blocks" : "/admin/blocks",
+      );
       blocks.value = data.data;
     } catch (cause) {
       notify(apiError(cause), "error");
@@ -399,7 +470,9 @@ export function useAdminStore() {
   }
   async function removeBlock(id) {
     try {
-      await api.delete(`/admin/blocks/${id}`);
+      await api.delete(
+        `${isCompany.value ? "/admin/studio/blocks" : "/admin/blocks"}/${id}`,
+      );
       blocks.value = blocks.value.filter((block) => block.id !== id);
       notify("Blokir jadwal dihapus.");
     } catch (cause) {
@@ -422,6 +495,37 @@ export function useAdminStore() {
         end_time: "17:00",
       };
     else delete scheduleDrafts[personId][weekday];
+  }
+  function toggleStudioDay(weekday, enabled) {
+    if (enabled)
+      studioSchedule[weekday] = {
+        weekday,
+        start_time: "09:00",
+        end_time: "17:00",
+      };
+    else delete studioSchedule[weekday];
+  }
+  async function saveStudioSchedule() {
+    try {
+      await api.put("/admin/studio/schedule", {
+        schedule: Object.values(studioSchedule),
+      });
+      notify("Jam operasional studio disimpan.");
+    } catch (cause) {
+      notify(apiError(cause), "error");
+    }
+  }
+  async function savePortfolio(item) {
+    try {
+      if (item.id) await api.patch(`/admin/portfolio/${item.id}`, item);
+      else await api.post("/admin/portfolio", item);
+      portfolio.value = (await api.get("/admin/portfolio")).data.data;
+      notify(item.id ? "Karya diperbarui." : "Karya ditambahkan.");
+      return true;
+    } catch (cause) {
+      notify(apiError(cause), "error");
+      return false;
+    }
   }
   async function saveSchedule(personId) {
     try {
@@ -595,6 +699,8 @@ export function useAdminStore() {
     pendingStatusChange,
     pendingBlockRemoval,
     blocks,
+    portfolio,
+    studioSchedule,
     professionals,
     services,
     offerings,
@@ -602,6 +708,8 @@ export function useAdminStore() {
     selectedOfferingPro,
     newAccount,
     passwordForm,
+    passwordFieldErrors,
+    passwordBusy,
     siteForm,
     newProfessional,
     newService,
@@ -630,6 +738,9 @@ export function useAdminStore() {
     requestBlockRemoval,
     confirmBlockRemoval,
     toggleDay,
+    toggleStudioDay,
+    saveStudioSchedule,
+    savePortfolio,
     saveSchedule,
     addProfessional,
     saveProfessional,

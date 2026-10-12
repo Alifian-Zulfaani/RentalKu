@@ -148,3 +148,88 @@ profileCopy.run(
   "Saya mendokumentasikan peristiwa tanpa mengubah ritmenya: detail kecil, ekspresi jujur, dan hubungan yang tak perlu diarahkan berlebihan.",
   "arya",
 );
+const studio = db.prepare("SELECT id FROM tenants WHERE slug = 'studio'").get();
+if (studio) {
+  db.prepare(
+    `UPDATE tenants SET
+    philosophy_title = CASE WHEN philosophy_title = '' THEN ? ELSE philosophy_title END,
+    philosophy_body = CASE WHEN philosophy_body = '' THEN ? ELSE philosophy_body END
+    WHERE id = ?`,
+  ).run(
+    "Cahaya terakhir, cerita yang terus hidup.",
+    "Nama Senja lahir dari momen ketika cahaya terasa lebih lembut dan kita ingin waktu berjalan sedikit lebih pelan. Bagi kami, foto yang baik bukan tentang pose yang sempurna, melainkan tentang kedekatan yang terasa jujur. Karena itu setiap sesi dimulai dengan percakapan, ruang untuk menjadi diri sendiri, dan perhatian pada detail kecil yang kelak ingin Anda ingat.",
+    studio.id,
+  );
+  const studioHours = db
+    .prepare(
+      "SELECT COUNT(*) AS count FROM studio_working_hours WHERE tenant_id = ?",
+    )
+    .get(studio.id).count;
+  if (!studioHours && !tenant)
+    db.prepare(
+      `INSERT INTO studio_working_hours (tenant_id, weekday, start_time, end_time)
+    SELECT ?, weekday, start_time, end_time FROM working_hours
+    WHERE professional_id = (SELECT id FROM professionals WHERE tenant_id = ? AND slug = 'naya')`,
+    ).run(studio.id, studio.id);
+  const portfolioCount = db
+    .prepare(
+      "SELECT COUNT(*) AS count FROM portfolio_items WHERE tenant_id = ?",
+    )
+    .get(studio.id).count;
+  if (!portfolioCount) {
+    const addPortfolio = db.prepare(
+      "INSERT INTO portfolio_items (tenant_id, title, caption, image_url, sort_order) VALUES (?, ?, ?, ?, ?)",
+    );
+    addPortfolio.run(
+      studio.id,
+      "Potret yang terasa dekat",
+      "Sesi personal dalam cahaya sore yang hangat.",
+      "/images/portfolio-portrait.png",
+      1,
+    );
+    addPortfolio.run(
+      studio.id,
+      "Cerita bersama keluarga",
+      "Momen kecil dan tawa yang layak diingat.",
+      "/images/portfolio-family.png",
+      2,
+    );
+    addPortfolio.run(
+      studio.id,
+      "Dua cerita, satu perjalanan",
+      "Potret pasangan yang jujur dan tenang.",
+      "/images/portfolio-couple.png",
+      3,
+    );
+  }
+  const extraWorks = [
+    [
+      "Ruang untuk diri sendiri",
+      "Potret personal dengan cahaya alami dan suasana yang tenang.",
+      "/images/portfolio-personal-2.png",
+      4,
+    ],
+    [
+      "Hangatnya rumah",
+      "Tawa lintas generasi dalam satu bingkai keluarga.",
+      "/images/portfolio-family-2.png",
+      5,
+    ],
+    [
+      "Berdua, apa adanya",
+      "Sore yang pelan untuk cerita sebelum hari istimewa.",
+      "/images/portfolio-couple-2.png",
+      6,
+    ],
+  ];
+  const hasWork = db.prepare(
+    "SELECT 1 FROM portfolio_items WHERE tenant_id = ? AND image_url = ?",
+  );
+  const insertWork = db.prepare(
+    "INSERT INTO portfolio_items (tenant_id, title, caption, image_url, sort_order) VALUES (?, ?, ?, ?, ?)",
+  );
+  for (const [title, caption, imageUrl, order] of extraWorks) {
+    if (!hasWork.get(studio.id, imageUrl))
+      insertWork.run(studio.id, title, caption, imageUrl, order);
+  }
+}

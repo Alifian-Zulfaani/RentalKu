@@ -21,7 +21,7 @@
             <dt>Layanan</dt>
             <dd>{{ service.name }}</dd>
           </div>
-          <div>
+          <div v-if="professional">
             <dt>Fotografer</dt>
             <dd>{{ professional.name }}</dd>
           </div>
@@ -72,7 +72,7 @@ import { longDate, money } from "../../utils/formatters";
 const props = defineProps({
   customer: { type: Object, required: true },
   service: { type: Object, required: true },
-  professional: { type: Object, required: true },
+  professional: { type: Object, default: null },
   date: { type: String, required: true },
   time: { type: String, required: true },
   submitting: { type: Boolean, default: false },

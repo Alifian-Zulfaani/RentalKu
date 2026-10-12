@@ -10,7 +10,7 @@
       <input
         v-model.trim="bookingSearch"
         type="search"
-        placeholder="Cari pemesan, layanan, atau fotografer…"
+        placeholder="Cari pemesan atau layanan…"
         aria-label="Cari reservasi"
       />
       <div class="admin-controls">
@@ -31,7 +31,6 @@
         <tr>
           <th data-align="left">Pemesan</th>
           <th data-align="left">Layanan</th>
-          <th data-align="left">Fotografer</th>
           <th data-align="center">Jadwal</th>
           <th data-align="right">Nilai</th>
           <th data-align="center">Status</th>
@@ -40,31 +39,30 @@
       </thead>
       <tbody>
         <tr v-for="item in bookings" :key="item.id">
-          <td data-align="left">
+          <td data-align="left" data-label="Pemesan">
             <strong>{{ item.customer_name }}</strong>
             <small class="cell-subtitle"
               >{{ item.customer_email }} · {{ item.customer_whatsapp }}</small
             >
           </td>
-          <td data-align="left">{{ item.service_name }}</td>
-          <td data-align="left">{{ item.professional_name }}</td>
-          <td data-align="center">
-            {{ item.date
-            }}<small class="cell-subtitle"
-              >{{ item.start_time }}–{{ item.end_time }}</small
-            >
+          <td data-align="left" data-label="Layanan">
+            {{ item.service_name }}
           </td>
-          <td data-align="right">
+          <td data-align="center" data-label="Jadwal">
+            {{ dateTime(item.date, item.start_time) }}
+            <small class="cell-subtitle">Selesai {{ item.end_time }}</small>
+          </td>
+          <td data-align="right" data-label="Nilai">
             {{ money(item.total) }}
           </td>
-          <td data-align="center">
+          <td data-align="center" data-label="Status">
             <span
               class="status-badge"
               :class="`status-badge--${item.status}`"
               >{{ bookingStatusLabel(item.status) }}</span
             >
           </td>
-          <td data-align="center">
+          <td data-align="center" data-label="Aksi">
             <div class="admin-action-group">
               <AdminActionButton
                 label="Detail"
@@ -98,7 +96,7 @@
           </td>
         </tr>
         <tr v-if="!bookingsLoading && !bookings.length">
-          <td colspan="7" class="table-empty">
+          <td colspan="6" class="table-empty">
             Belum ada reservasi pada filter ini.
           </td>
         </tr>
@@ -127,6 +125,7 @@ import AdminActionButton from "../../components/admin/AdminActionButton.vue";
 import AdminDataTable from "../../components/admin/AdminDataTable.vue";
 import AdminPagination from "../../components/admin/AdminPagination.vue";
 import { useAdminContext } from "../../stores/context";
+import { dateTime } from "../../utils/formatters";
 const {
   money,
   bookingStatusLabel,

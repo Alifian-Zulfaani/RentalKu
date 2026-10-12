@@ -13,6 +13,15 @@
         <span class="admin-brand-mark">S.</span>
         <strong v-if="showSidebarLabels">{{ tenantName }}</strong>
       </router-link>
+      <button
+        v-if="isMobile"
+        type="button"
+        class="sidebar-close"
+        aria-label="Tutup navigasi"
+        @click="menuOpen = false"
+      >
+        <X :size="19" />
+      </button>
       <p v-if="showSidebarLabels" class="side-caption">
         {{ isCompany ? "Panel studio" : "Ruang fotografer" }}
       </p>
@@ -29,15 +38,6 @@
           <span v-if="showSidebarLabels">{{ item.label }}</span>
         </router-link>
       </nav>
-      <button
-        type="button"
-        class="sidebar-logout"
-        :title="isSidebarCompact ? 'Keluar' : undefined"
-        @click="showLogoutConfirmation = true"
-      >
-        <LogOut :size="19" />
-        <span v-if="showSidebarLabels">Keluar</span>
-      </button>
     </aside>
 
     <div
@@ -74,15 +74,12 @@
           >
             <ExternalLink :size="16" /> <span>Lihat situs</span>
           </a>
-          <div class="admin-profile" :title="account.email">
-            <span>{{ account.email?.charAt(0).toUpperCase() || "A" }}</span>
-            <div class="admin-profile-copy">
-              <strong>{{
-                isCompany ? "Administrator" : accountProfessionalName
-              }}</strong>
-              <small>{{ isCompany ? "Admin studio" : "Fotografer" }}</small>
-            </div>
-          </div>
+          <AdminProfileMenu
+            :email="account.email"
+            :name="isCompany ? 'Administrator' : accountProfessionalName"
+            :role-label="isCompany ? 'Admin studio' : 'Fotografer'"
+            @logout="showLogoutConfirmation = true"
+          />
         </div>
       </header>
 
@@ -100,85 +97,77 @@
     </div>
 
     <Transition name="modal-fade">
-      <div
+      <AdminDialog
         v-if="selectedBooking"
-        class="booking-dialog-backdrop"
-        @click.self="selectedBooking = null"
+        ref="dialogElement"
+        title-id="booking-dialog-title"
+        close-label="Tutup detail reservasi"
+        @close="selectedBooking = null"
       >
-        <section
-          ref="dialogElement"
-          class="booking-dialog"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="booking-dialog-title"
-          tabindex="-1"
-        >
-          <div class="booking-dialog-head">
-            <div>
-              <p class="section-index">
-                DETAIL RESERVASI #{{ selectedBooking.id }}
-              </p>
-              <h2 id="booking-dialog-title">
-                {{ selectedBooking.customer_name }}
-              </h2>
-            </div>
-            <button
-              type="button"
-              aria-label="Tutup detail"
-              @click="selectedBooking = null"
-            >
-              <X :size="20" />
-            </button>
+        <template #header>
+          <p class="section-index">
+            DETAIL RESERVASI #{{ selectedBooking.id }}
+          </p>
+          <h2 id="booking-dialog-title">{{ selectedBooking.customer_name }}</h2>
+        </template>
+        <dl>
+          <div>
+            <dt>Status</dt>
+            <dd>
+              <span
+                class="status-badge"
+                :class="`status-badge--${selectedBooking.status}`"
+              >
+                {{ bookingStatusLabel(selectedBooking.status) }}
+              </span>
+            </dd>
           </div>
-          <dl>
-            <div>
-              <dt>Status</dt>
-              <dd>{{ bookingStatusLabel(selectedBooking.status) }}</dd>
-            </div>
-            <div>
-              <dt>Layanan</dt>
-              <dd>{{ selectedBooking.service_name }}</dd>
-            </div>
-            <div>
-              <dt>Fotografer</dt>
-              <dd>{{ selectedBooking.professional_name }}</dd>
-            </div>
-            <div>
-              <dt>Jadwal</dt>
-              <dd>
-                {{ selectedBooking.date }} · {{ selectedBooking.start_time }}–{{
-                  selectedBooking.end_time
-                }}
-              </dd>
-            </div>
-            <div>
-              <dt>Nilai</dt>
-              <dd>{{ money(selectedBooking.total) }}</dd>
-            </div>
-            <div>
-              <dt>Email</dt>
-              <dd>{{ selectedBooking.customer_email }}</dd>
-            </div>
-            <div>
-              <dt>WhatsApp</dt>
-              <dd>{{ selectedBooking.customer_whatsapp }}</dd>
-            </div>
-            <div>
-              <dt>Catatan</dt>
-              <dd>{{ selectedBooking.notes || "Tidak ada catatan" }}</dd>
-            </div>
-          </dl>
-          <div class="dialog-actions">
-            <button
-              type="button"
-              class="button secondary"
-              @click="selectedBooking = null"
-            >
-              Tutup
-            </button>
+          <div>
+            <dt>Layanan</dt>
+            <dd>{{ selectedBooking.service_name }}</dd>
           </div>
-        </section>
-      </div>
+          <div v-if="selectedBooking.booking_scope === 'professional'">
+            <dt>Fotografer</dt>
+            <dd>{{ selectedBooking.professional_name }}</dd>
+          </div>
+          <div>
+            <dt>Jadwal</dt>
+            <dd>
+              {{ dateTime(selectedBooking.date, selectedBooking.start_time) }}
+              – {{ selectedBooking.end_time }}
+            </dd>
+          </div>
+          <div v-if="selectedBooking.created_at">
+            <dt>Reservasi dibuat</dt>
+            <dd>{{ dateTime(selectedBooking.created_at) }}</dd>
+          </div>
+          <div>
+            <dt>Nilai</dt>
+            <dd>{{ money(selectedBooking.total) }}</dd>
+          </div>
+          <div>
+            <dt>Email</dt>
+            <dd>{{ selectedBooking.customer_email }}</dd>
+          </div>
+          <div>
+            <dt>WhatsApp</dt>
+            <dd>{{ selectedBooking.customer_whatsapp }}</dd>
+          </div>
+          <div>
+            <dt>Catatan</dt>
+            <dd>{{ selectedBooking.notes || "Tidak ada catatan" }}</dd>
+          </div>
+        </dl>
+        <template #footer>
+          <button
+            type="button"
+            class="button secondary"
+            @click="selectedBooking = null"
+          >
+            Tutup
+          </button>
+        </template>
+      </AdminDialog>
     </Transition>
 
     <ConfirmModal
@@ -195,7 +184,7 @@
       title="Hapus blokir jadwal?"
       :message="
         pendingBlockRemoval
-          ? `Blokir ${pendingBlockRemoval.professional_name} pada ${pendingBlockRemoval.date} akan dihapus sehingga waktu tersebut dapat tersedia kembali.`
+          ? `Blokir studio pada ${longDate(pendingBlockRemoval.date)} akan dihapus sehingga waktu tersebut dapat tersedia kembali.`
           : ''
       "
       confirm-label="Ya, hapus blokir"
@@ -218,12 +207,16 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ExternalLink, LogOut, PanelLeft, X } from "lucide-vue-next";
+import { ExternalLink, PanelLeft, X } from "lucide-vue-next";
+import AdminProfileMenu from "./AdminProfileMenu.vue";
+import AdminDialog from "./AdminDialog.vue";
 import ConfirmModal from "./ConfirmModal.vue";
 import ToastMessage from "../shared/ToastMessage.vue";
 import ThemeToggle from "../shared/ThemeToggle.vue";
 import { useAdminStore } from "../../stores/admin";
 import { adminContextKey } from "../../stores/context";
+import { dateTime, longDate } from "../../utils/formatters";
+import { consumeAdminFlash } from "../../utils/adminFlash";
 import "../../admin.css";
 
 const route = useRoute();
@@ -303,7 +296,7 @@ const statusConfirmation = computed(() => {
   return {
     ...copy,
     tone: copy.tone || "primary",
-    message: `${pending.item.customer_name} · ${pending.item.date}. ${copy.message}`,
+    message: `${pending.item.customer_name} · ${longDate(pending.item.date)}. ${copy.message}`,
   };
 });
 
@@ -344,6 +337,8 @@ function handleLogout() {
 onMounted(() => {
   window.addEventListener("resize", syncViewport, { passive: true });
   window.addEventListener("keydown", handleKeydown);
+  const flashMessage = consumeAdminFlash();
+  if (flashMessage) workspace.notify(flashMessage);
 });
 onBeforeUnmount(() => {
   window.removeEventListener("resize", syncViewport);

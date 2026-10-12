@@ -31,18 +31,17 @@ Tanggal dan jam booking memakai waktu lokal bisnis (`YYYY-MM-DD`, `HH:MM`), sesu
 | Method | Endpoint | Keterangan |
 | --- | --- | --- |
 | `GET` | `/health` | Status layanan; respons `{ "status": "ok" }` |
-| `GET` | `/public/site?tenant=studio[&pro=naya]` | Profil studio, fotografer, layanan/harga, dan profil serta jadwal pribadi jika `pro` dipilih |
-| `GET` | `/public/availability?tenant=studio&pro=naya&service=1&month=2026-10` | Hari dalam bulan dengan `slots` dan `available` |
+| `GET` | `/public/site?tenant=studio[&pro=naya]` | Profil studio, layanan, jam operasional, dan portofolio aktif; profil fotografer jika `pro` dipilih |
+| `GET` | `/public/availability?tenant=studio&service=1&month=2026-10` | Slot kalender studio; `pro` opsional untuk mode fotografer mendatang |
 | `POST` | `/public/bookings` | Membuat reservasi; sukses `201` |
 
-`GET /public/site` mengembalikan `{ "tenant": { ... }, "profile": null | { ... }, "professionals": [], "services": [], "schedule": [] }`. `GET /public/availability` mengembalikan `{ "month": "2026-10", "days": [{ "date": "2026-10-17", "slots": ["10:00"], "available": true }] }`.
+`GET /public/site` mengembalikan `{ "tenant": { ... }, "profile": null | { ... }, "professionals": [], "services": [], "schedule": [], "portfolio": [] }`. `tenant` mencakup `philosophy_title` dan `philosophy_body`; `portfolio` hanya berisi karya aktif. Tanpa `pro`, `services` berisi harga studio dan `schedule` adalah jam studio. `GET /public/availability` mengembalikan `{ "month": "2026-10", "days": [{ "date": "2026-10-17", "slots": ["10:00"], "available": true }] }`.
 
 Body `POST /public/bookings`:
 
 ```json
 {
   "tenant": "studio",
-  "pro": "naya",
   "service_id": 1,
   "date": "2026-10-17",
   "start_time": "10:00",
@@ -53,7 +52,7 @@ Body `POST /public/bookings`:
 }
 ```
 
-`tenant`, `pro`, dan `service_id` harus saling cocok. Layanan harus aktif untuk fotografer tersebut. Server menghitung `end_time` dan `total` dari durasi serta harga fotografer; klien tidak menentukan keduanya. Tanggal/jam harus merupakan slot tersedia dan belum lewat. Respons `201` memuat `message` serta `data` (`id`, `customer_name`, `service_name`, `professional_name`, `date`, `start_time`, `end_time`, `total`, `status`) untuk ringkasan konfirmasi; slot yang keburu terisi mengembalikan `409`.
+`tenant` dan `service_id` harus saling cocok. `pro` dihilangkan pada MVP agar memakai kalender dan harga studio; jika diberikan, mode fotografer lama tetap bekerja. Server menghitung `end_time` dan `total`; klien tidak menentukan keduanya. Respons `201` memuat `message` serta `data` (`id`, `customer_name`, `service_name`, `booking_scope`, `date`, `start_time`, `end_time`, `total`, `status`); slot yang keburu terisi mengembalikan `409`.
 
 ## Autentikasi admin
 
@@ -69,6 +68,11 @@ Body `POST /public/bookings`:
 | Method | Endpoint | Keterangan |
 | --- | --- | --- |
 | `GET` | `/admin/overview` | Statistik dan lima reservasi terbaru sesuai role |
+| `GET`, `PUT` | `/admin/studio/schedule` | Baca/ganti jam operasional studio (khusus studio) |
+| `GET`, `POST` | `/admin/studio/blocks` | Baca/tambah blokir studio (khusus studio) |
+| `DELETE` | `/admin/studio/blocks/:id` | Hapus blokir studio (khusus studio) |
+| `GET`, `POST` | `/admin/portfolio` | Baca/tambah karya studio (khusus studio) |
+| `PATCH` | `/admin/portfolio/:id` | Ubah karya/visibilitasnya (khusus studio) |
 | `GET` | `/admin/bookings?page=1[&status=pending][&search=Ayu]` | Reservasi berpaginasi, 10 item per halaman; pencarian mencakup pemesan, kontak, fotografer, dan layanan |
 | `PATCH` | `/admin/bookings/:id/status` | Ubah status reservasi |
 | `GET` | `/admin/professionals` | Fotografer dan jam kerja mingguan |
@@ -96,10 +100,11 @@ Body penting:
 - Layanan: `name`, `description`, `duration_minutes` (30–480, kelipatan 30), `price` (rupiah, tidak negatif); `PATCH` juga dapat mengubah `active`.
 - Profil fotografer baru: `slug`, `name`, `title`, `bio`; `photo_url`, `headline`, `approach` opsional. Admin studio juga dapat mengubah `slug` dan `active` pada `PATCH`.
 - Harga fotografer: `{ "offerings": [{ "service_id": 1, "price": 250000, "active": true }] }`.
-- Profil studio: `name`, `tagline`, `about`, `location`, `whatsapp`, `email`, `hero_image_url`.
+- Profil studio: `name`, `tagline`, `about`, `location`, `whatsapp`, `email`, `hero_image_url`, `philosophy_title`, `philosophy_body`. Dua field filosofi opsional pada PATCH untuk kompatibilitas klien lama.
 - Blokir jadwal: `professional_id`, `date`, `start_time`, `end_time`, dan `reason` opsional.
+- Blokir studio: `date`, `start_time`, `end_time`, dan `reason` opsional. Portofolio: `title`, `caption`, `image_url` (HTTPS atau `/images/`), `sort_order`, `active`.
 - Akun fotografer: `email`, `password` minimal 8 karakter, `professional_id`.
-- Kata sandi sendiri: `current_password` dan `new_password` minimal 8 karakter.
+- Kata sandi sendiri: `current_password`, `new_password` (8–128 karakter), dan `new_password_confirmation` yang wajib sama persis. Kata sandi baru harus berbeda dari kata sandi saat ini; kesalahan dikembalikan sebagai error field `422`.
 
 ## Status dan aturan bisnis
 
@@ -110,4 +115,4 @@ Body penting:
 | `completed` | Selesai | Sesi telah selesai |
 | `cancelled` | Dibatalkan | Reservasi dibatalkan; slot kembali tersedia |
 
-Slot dihitung dari jam kerja, durasi layanan, reservasi selain `cancelled`, dan blokir admin. Harga saat reservasi dibuat disalin dari paket fotografer sehingga perubahan tarif berikutnya tidak mengubah nilai reservasi lama. Saat status `cancelled` diubah kembali, API memeriksa bentrok sebelum menyimpan. Admin studio melihat seluruh data tenant; fotografer hanya dapat mengelola reservasi, blokir, jam kerja, profil, serta paket/harga miliknya. ID selalu diperiksa terhadap tenant dan cakupan role.
+Pada MVP, slot dihitung dari jam studio, durasi layanan, semua reservasi tenant selain `cancelled`, dan blokir studio. Harga saat reservasi dibuat disalin dari layanan sehingga perubahan tarif berikutnya tidak mengubah reservasi lama. Saat status `cancelled` diaktifkan kembali, API memeriksa bentrok sebelum menyimpan. Endpoint fotografer lama tetap tersedia untuk fase berikutnya; aksesnya tetap dibatasi oleh tenant dan role.

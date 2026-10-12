@@ -3,7 +3,7 @@
     <div class="section-top">
       <div>
         <p class="section-index">
-          {{ site.profile ? "04 / JADWALKAN SESI" : "04 — RESERVASI" }}
+          {{ site.profile ? "04 / JADWALKAN SESI" : "01 — RESERVASI" }}
         </p>
         <h2>
           {{
@@ -30,7 +30,7 @@
     <div class="booking-layout">
       <div class="booking-card">
         <div class="selection-grid">
-          <label
+          <label v-if="photographersEnabled"
             >Fotografer<select
               v-model="selectedPro"
               :disabled="Boolean(site.profile)"
@@ -126,7 +126,7 @@
         <h3>{{ chosenService?.name || "Pilih layanan" }}</h3>
         <p>{{ chosenService?.description }}</p>
         <dl>
-          <div>
+          <div v-if="photographersEnabled">
             <dt>Fotografer</dt>
             <dd>{{ chosenProfessional?.name || "—" }}</dd>
           </div>
@@ -208,6 +208,7 @@
 <script setup>
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-vue-next";
 import { usePublicContext } from "../../stores/context";
+import { photographersEnabled } from "../../config/features";
 const {
   site,
   availableServices,

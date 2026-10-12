@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { photographersEnabled } from "../config/features";
 
 const adminPages = [
   {
@@ -23,31 +24,47 @@ const adminPages = [
     path: "photographers",
     name: "Professionals",
     component: () => import("../views/admin/ProfessionalsPage.vue"),
-    meta: { menuKey: "team", title: "Fotografer" },
+    meta: { menuKey: "team", title: "Fotografer", mvpHidden: true },
   },
   {
     path: "photographers/new",
     name: "PhotographerCreate",
     component: () => import("../views/admin/PhotographerCreatePage.vue"),
-    meta: { menuKey: "team", title: "Tambah fotografer", companyOnly: true },
+    meta: {
+      menuKey: "team",
+      title: "Tambah fotografer",
+      companyOnly: true,
+      mvpHidden: true,
+    },
   },
   {
     path: "photographers/:id/edit",
     name: "PhotographerEdit",
     component: () => import("../views/admin/PhotographerEditPage.vue"),
-    meta: { menuKey: "team", title: "Edit fotografer" },
+    meta: { menuKey: "team", title: "Edit fotografer", mvpHidden: true },
   },
   {
     path: "photographers/:id",
     name: "PhotographerDetail",
     component: () => import("../views/admin/PhotographerDetailPage.vue"),
-    meta: { menuKey: "team", title: "Detail fotografer" },
+    meta: { menuKey: "team", title: "Detail fotografer", mvpHidden: true },
   },
   {
     path: "services",
     name: "Services",
     component: () => import("../views/admin/ServicesPage.vue"),
-    meta: { menuKey: "services", title: "Layanan studio", companyOnly: true },
+    meta: {
+      menuKey: "services",
+      title: "Layanan studio",
+      companyOnly: true,
+      mvpHidden: true,
+    },
+  },
+  {
+    path: "portfolio",
+    name: "PortfolioAdmin",
+    component: () => import("../views/admin/PortfolioPage.vue"),
+    meta: { menuKey: "portfolio", title: "Portofolio", companyOnly: true },
   },
   {
     path: "settings",
@@ -78,6 +95,17 @@ const router = createRouter({
       component: () => import("../views/public/BookingSuccessPage.vue"),
     },
     {
+      path: "/bio",
+      name: "Bio",
+      component: () => import("../views/public/BioPage.vue"),
+    },
+    { path: "/tentang", redirect: "/bio" },
+    {
+      path: "/portofolio",
+      name: "Portfolio",
+      component: () => import("../views/public/PortfolioPage.vue"),
+    },
+    {
       path: "/admin/login",
       name: "AdminLogin",
       component: () => import("../views/admin/LoginPage.vue"),
@@ -98,6 +126,7 @@ const router = createRouter({
 });
 
 router.beforeEach((to) => {
+  if (to.meta.mvpHidden && !photographersEnabled) return { name: "Dashboard" };
   const token = sessionStorage.getItem("booking_admin_token");
   if (to.matched.some((record) => record.meta.requiresAuth) && !token)
     return { name: "AdminLogin", query: { redirect: to.fullPath } };

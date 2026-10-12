@@ -3,11 +3,10 @@
     <p class="section-index">02 — KETERSEDIAAN</p>
     <h2>Blokir waktu</h2>
     <p class="panel-description">
-      Gunakan saat fotografer libur atau sedang menerima pekerjaan di luar
-      sistem.
+      Blokir waktu saat studio tutup atau tidak menerima sesi.
     </p>
     <form class="admin-form" @submit.prevent="addBlock">
-      <label
+      <label v-if="photographersEnabled"
         >Fotografer<select
           v-model.number="blockForm.professional_id"
           required
@@ -52,7 +51,6 @@
     <AdminDataTable actions>
       <thead>
         <tr>
-          <th data-align="left">Fotografer</th>
           <th data-align="center">Tanggal</th>
           <th data-align="center">Waktu</th>
           <th data-align="left">Alasan</th>
@@ -61,13 +59,16 @@
       </thead>
       <tbody>
         <tr v-for="block in pagedBlocks" :key="block.id">
-          <td data-align="left">{{ block.professional_name }}</td>
-          <td data-align="center">{{ block.date }}</td>
-          <td data-align="center">
+          <td data-align="center" data-label="Tanggal">
+            {{ longDate(block.date) }}
+          </td>
+          <td data-align="center" data-label="Waktu">
             {{ block.start_time }}–{{ block.end_time }}
           </td>
-          <td data-align="left">{{ block.reason || "—" }}</td>
-          <td data-align="center">
+          <td data-align="left" data-label="Alasan">
+            {{ block.reason || "—" }}
+          </td>
+          <td data-align="center" data-label="Aksi">
             <AdminActionButton
               label="Hapus blokir"
               tone="warning"
@@ -76,7 +77,7 @@
           </td>
         </tr>
         <tr v-if="!pagedBlocks.length">
-          <td colspan="5" class="table-empty">
+          <td colspan="4" class="table-empty">
             Tidak ada jadwal terblokir ke depan.
           </td>
         </tr>
@@ -102,6 +103,8 @@ import AdminActionButton from "../../components/admin/AdminActionButton.vue";
 import AdminDataTable from "../../components/admin/AdminDataTable.vue";
 import AdminPagination from "../../components/admin/AdminPagination.vue";
 import { useAdminContext } from "../../stores/context";
+import { photographersEnabled } from "../../config/features";
+import { longDate } from "../../utils/formatters";
 const {
   blocks,
   blockForm,

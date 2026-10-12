@@ -30,6 +30,11 @@ function currentTime() {
   }).format(new Date());
 }
 function isAvailable(professionalId, date, startTime, endTime) {
+  const tenantId = db
+    .prepare("SELECT tenant_id FROM professionals WHERE id = ?")
+    .get(professionalId)?.tenant_id;
+  if (!tenantId || !isStudioAvailable(tenantId, date, startTime, endTime))
+    return false;
   const collision = db
     .prepare(
       `SELECT 1 FROM bookings WHERE professional_id = ? AND date = ? AND status != 'cancelled' AND start_time < ? AND end_time > ? LIMIT 1`,
@@ -41,6 +46,19 @@ function isAvailable(professionalId, date, startTime, endTime) {
     )
     .get(professionalId, date, endTime, startTime);
   return !collision && !block;
+}
+function isStudioAvailable(tenantId, date, startTime, endTime) {
+  const booking = db
+    .prepare(
+      "SELECT 1 FROM bookings WHERE tenant_id = ? AND date = ? AND status != 'cancelled' AND start_time < ? AND end_time > ? LIMIT 1",
+    )
+    .get(tenantId, date, endTime, startTime);
+  const block = db
+    .prepare(
+      "SELECT 1 FROM studio_blocks WHERE tenant_id = ? AND date = ? AND start_time < ? AND end_time > ? LIMIT 1",
+    )
+    .get(tenantId, date, endTime, startTime);
+  return !booking && !block;
 }
 function slotsForDay(professionalId, date, duration) {
   if (!validDate(date) || date < today()) return [];
@@ -65,6 +83,28 @@ function slotsForDay(professionalId, date, duration) {
   }
   return slots;
 }
+function slotsForStudioDay(tenantId, date, duration) {
+  if (!validDate(date) || date < today()) return [];
+  const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
+  const hours = db
+    .prepare(
+      "SELECT start_time, end_time FROM studio_working_hours WHERE tenant_id = ? AND weekday = ?",
+    )
+    .get(tenantId, weekday);
+  if (!hours) return [];
+  const slots = [];
+  for (
+    let start = toMinutes(hours.start_time);
+    start + duration <= toMinutes(hours.end_time);
+    start += 30
+  ) {
+    const startTime = toTime(start);
+    if (date === today() && startTime <= currentTime()) continue;
+    if (isStudioAvailable(tenantId, date, startTime, toTime(start + duration)))
+      slots.push(startTime);
+  }
+  return slots;
+}
 module.exports = {
   validDate,
   timePattern,
@@ -73,4 +113,6 @@ module.exports = {
   today,
   slotsForDay,
   isAvailable,
+  isStudioAvailable,
+  slotsForStudioDay,
 };

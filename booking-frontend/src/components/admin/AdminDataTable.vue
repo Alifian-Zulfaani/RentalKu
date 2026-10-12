@@ -1,5 +1,10 @@
 <template>
-  <div class="admin-table-wrap">
+  <div
+    class="admin-table-wrap"
+    role="region"
+    aria-label="Daftar data"
+    tabindex="0"
+  >
     <table class="admin-table" :class="{ 'has-actions': actions, wide }">
       <slot />
     </table>

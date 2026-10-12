@@ -19,7 +19,7 @@
         Profil studio
       </button>
       <button
-        v-if="isCompany"
+        v-if="isCompany && photographersEnabled"
         type="button"
         :class="{ active: tab === 'accounts' }"
         @click="tab = 'accounts'"
@@ -43,6 +43,7 @@
 <script setup>
 import { ref } from "vue";
 import { useAdminContext } from "../../stores/context";
+import { photographersEnabled } from "../../config/features";
 import SiteSettingsPage from "./SiteSettingsPage.vue";
 import AccountsPage from "./AccountsPage.vue";
 import SecurityPage from "./SecurityPage.vue";

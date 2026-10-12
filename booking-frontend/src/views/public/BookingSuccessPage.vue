@@ -1,19 +1,6 @@
 <template>
   <div class="site-shell success-page">
-    <header class="site-header">
-      <div class="wrap header-inner">
-        <a :href="returnHref" class="wordmark">
-          <span class="mark">S.</span>
-          <span>{{ tenantName }}<small>PHOTOGRAPHY HOUSE</small></span>
-        </a>
-        <div class="success-header-actions">
-          <ThemeToggle />
-          <a :href="returnHref" class="button secondary success-header-link">
-            Kembali ke situs
-          </a>
-        </div>
-      </div>
-    </header>
+    <PublicHeader :name="tenantName" :home-href="returnHref" />
     <main class="success-main wrap">
       <template v-if="receipt">
         <div class="success-intro">
@@ -39,7 +26,7 @@
               <dt>Layanan</dt>
               <dd>{{ receipt.service_name }}</dd>
             </div>
-            <div>
+            <div v-if="receipt.booking_scope === 'professional'">
               <dt>Fotografer</dt>
               <dd>{{ receipt.professional_name }}</dd>
             </div>
@@ -98,7 +85,7 @@ import { ArrowUpRight, CalendarCheck2, CalendarDays } from "lucide-vue-next";
 import { siteContext } from "../../services/api";
 import { longDate, money } from "../../utils/formatters";
 import FloatingActions from "../../components/shared/FloatingActions.vue";
-import ThemeToggle from "../../components/shared/ThemeToggle.vue";
+import PublicHeader from "../../components/public/PublicHeader.vue";
 
 const context = siteContext();
 const receipt = window.history.state?.confirmation || null;
@@ -107,7 +94,7 @@ const localHost =
   ["localhost", "127.0.0.1"].includes(window.location.hostname) ||
   window.location.hostname.endsWith(".localhost");
 const returnHref = localHost
-  ? `/?tenant=${encodeURIComponent(context.tenant || "studio")}${context.pro ? `&pro=${encodeURIComponent(context.pro)}` : ""}`
+  ? `/?tenant=${encodeURIComponent(context.tenant || "studio")}`
   : "/";
 const whatsappUrl = computed(() => {
   const number = String(receipt?.tenant_whatsapp || "")

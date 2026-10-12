@@ -88,8 +88,20 @@ button:disabled {
   gap: 20px;
   min-height: 76px;
 }
+.site-header .public-header-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 38px;
+  column-gap: clamp(20px, 3vw, 36px);
+}
+.public-header-inner > .theme-toggle {
+  justify-self: end;
+}
+.public-menu-toggle {
+  display: none;
+}
 .wordmark {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 11px;
   font-family: Manrope, sans-serif;
@@ -98,12 +110,18 @@ button:disabled {
 }
 .brand-mark {
   display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
   align-items: center;
   gap: 11px;
   white-space: nowrap;
 }
 .brand-copy {
   display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .wordmark small {
   display: block;
@@ -193,13 +211,13 @@ button:disabled {
   width: 23px;
   height: 23px;
 }
-.success-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
 .site-header nav a:hover {
   color: #a66949;
+}
+.site-header nav a.router-link-exact-active {
+  color: var(--public-accent);
+  text-decoration: underline;
+  text-underline-offset: 7px;
 }
 .nav-book {
   display: inline-flex;
@@ -892,9 +910,6 @@ button:disabled {
 .missing-receipt .button {
   margin-top: 25px;
 }
-.success-header-link {
-  border: 1px solid #b8c2b7;
-}
 .booking-confirmation {
   max-width: 790px;
   display: grid;
@@ -978,10 +993,6 @@ button:disabled {
     flex-direction: column;
     gap: 10px;
   }
-  .success-header-link {
-    font-size: 0.74rem;
-    padding: 8px;
-  }
   .confirmation-details div {
     display: grid;
     gap: 3px;
@@ -1035,15 +1046,66 @@ button:disabled {
   }
   .header-inner {
     min-height: 65px;
+    flex-wrap: wrap;
+    padding: 10px 0;
   }
-  .site-header nav {
+  .site-header .public-header-inner {
+    grid-template-columns: minmax(0, 1fr) 38px 38px;
     gap: 10px;
+    padding: 10px 0;
   }
-  .site-header nav a:not(.nav-book) {
+  .public-header-inner > .theme-toggle {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .public-menu-toggle {
+    display: grid;
+    grid-column: 3;
+    grid-row: 1;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--public-border);
+    border-radius: 6px;
+    background: var(--public-surface);
+    color: var(--public-ink);
+  }
+  .public-menu-toggle:hover,
+  .public-menu-toggle[aria-expanded="true"] {
+    border-color: var(--public-accent);
+    color: var(--public-accent);
+  }
+  .site-header .public-header-inner nav {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: 0;
     display: none;
+    width: 100%;
+    gap: 4px;
+    padding: 8px max(16px, calc((100vw - 1180px) / 2)) 14px;
+    border-bottom: 1px solid var(--public-border);
+    background: var(--public-surface);
+    box-shadow: 0 14px 22px rgba(16, 29, 22, 0.12);
+  }
+  .site-header .public-header-inner nav.is-open {
+    display: grid;
+  }
+  .public-header-inner nav a {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    padding: 0 12px;
+    border-radius: 4px;
+  }
+  .site-header .public-header-inner nav a.router-link-exact-active {
+    background: var(--public-surface-soft);
+    text-decoration: none;
   }
   .nav-book {
     padding: 8px 10px;
+    margin-left: auto;
   }
   .hero {
     padding-top: 45px;
@@ -1449,8 +1511,7 @@ button:disabled {
     .calendar-day,
     .time-grid button,
     .confirmation-actions .secondary,
-    .booking-confirm-actions .secondary,
-    .success-header-link
+    .booking-confirm-actions .secondary
   ) {
   border-color: var(--public-border);
   background: #202f27;
@@ -1489,4 +1550,310 @@ button:disabled {
   border-color: #dfe9e1;
   background: #dfe9e1;
   color: #18241e;
+}
+/* Studio-first MVP: booking is the opening section, with work shown below. */
+.reservation {
+  padding-top: clamp(3rem, 7vw, 6rem);
+}
+.portfolio-section {
+  padding-top: clamp(3rem, 7vw, 6rem);
+  padding-bottom: clamp(4rem, 8vw, 7rem);
+}
+.portfolio-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+.portfolio-heading > div {
+  max-width: 42rem;
+}
+.portfolio-heading h1,
+.portfolio-heading h2 {
+  margin: 0.5rem 0 1rem;
+}
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+.portfolio-card {
+  min-width: 0;
+  background: var(--public-surface);
+  border: 1px solid var(--public-border);
+}
+.portfolio-card-trigger {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--public-ink);
+  text-align: left;
+  cursor: zoom-in;
+}
+.portfolio-image-wrap {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+.portfolio-card img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+.portfolio-card-trigger:hover img,
+.portfolio-card-trigger:focus-visible img {
+  transform: scale(1.035);
+}
+.portfolio-view-label {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  background: rgba(18, 27, 23, 0.82);
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+.portfolio-card-copy {
+  display: block;
+  padding: 1.1rem 1.2rem 1.4rem;
+}
+.portfolio-card-copy strong {
+  display: block;
+  margin: 0 0 0.4rem;
+  font-size: 1.2rem;
+}
+.portfolio-card-copy > span {
+  display: block;
+  margin: 0;
+  line-height: 1.6;
+  color: var(--public-muted);
+}
+.portfolio-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: grid;
+  place-items: center;
+  padding: clamp(12px, 3vw, 28px);
+  background: rgba(9, 16, 12, 0.86);
+}
+.portfolio-preview {
+  width: min(840px, 100%);
+  max-height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  background: var(--public-surface);
+  color: var(--public-ink);
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+}
+.portfolio-preview-top,
+.portfolio-preview-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+}
+.portfolio-preview-top > span {
+  color: var(--public-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+}
+.portfolio-preview > img {
+  display: block;
+  width: 100%;
+  max-height: min(68vh, 760px);
+  object-fit: contain;
+  background: #101915;
+}
+.portfolio-preview-bottom h2 {
+  margin: 0 0 3px;
+  font-size: 1.1rem;
+}
+.portfolio-preview-bottom p {
+  margin: 0;
+  color: var(--public-muted);
+  font-size: 0.83rem;
+}
+.portfolio-preview-close,
+.portfolio-preview-controls button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid var(--public-border);
+  background: var(--public-surface);
+  color: var(--public-ink);
+  cursor: pointer;
+}
+.portfolio-preview-controls {
+  display: flex;
+  gap: 7px;
+  flex: 0 0 auto;
+}
+.portfolio-preview-controls button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.portfolio-preview button:hover:not(:disabled) {
+  border-color: var(--public-accent);
+  color: var(--public-accent);
+}
+.portfolio-empty {
+  padding: 3rem 0;
+}
+.studio-bio {
+  display: grid;
+  grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr);
+  gap: clamp(2.5rem, 5vw, 5.5rem);
+  align-items: center;
+  padding-top: clamp(3rem, 6vw, 5.5rem);
+  padding-bottom: clamp(4rem, 7vw, 6rem);
+}
+.studio-bio-copy {
+  min-width: 0;
+}
+.studio-bio-copy h1 {
+  max-width: 11ch;
+  font-size: clamp(2.8rem, 4.4vw, 4.8rem);
+  line-height: 1.09;
+  letter-spacing: -0.055em;
+  margin: 1rem 0 1.65rem;
+}
+.studio-bio-copy > p {
+  max-width: 34rem;
+  color: var(--public-muted);
+  line-height: 1.75;
+}
+.studio-bio-copy > .button {
+  margin-top: 2rem;
+}
+.studio-bio > img {
+  width: 100%;
+  height: clamp(28rem, 43vw, 38rem);
+  object-fit: cover;
+  object-position: center;
+}
+.studio-philosophy {
+  background: var(--public-surface-soft);
+  padding: clamp(4rem, 8vw, 7rem) 0;
+}
+.studio-philosophy-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  align-items: center;
+  gap: clamp(3rem, 7vw, 7rem);
+}
+.studio-philosophy-visual {
+  position: relative;
+  margin: 0;
+}
+.studio-philosophy-visual img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+.studio-philosophy-visual figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--public-border);
+  margin-top: 0.85rem;
+  color: var(--public-muted);
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+}
+.studio-philosophy-visual figcaption span {
+  color: var(--public-accent);
+}
+.studio-philosophy h2 {
+  max-width: 13ch;
+  margin: 1.25rem 0 1.75rem;
+  font-size: clamp(2.4rem, 3.8vw, 4rem);
+  line-height: 1.12;
+  letter-spacing: -0.045em;
+}
+.studio-philosophy-copy > p:not(.section-index) {
+  max-width: 35rem;
+  color: var(--public-muted);
+  line-height: 1.8;
+  font-size: clamp(0.98rem, 1.2vw, 1.08rem);
+}
+.studio-philosophy-footer {
+  margin-top: 2.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--public-border);
+}
+.studio-philosophy-footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--public-accent);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.studio-philosophy-footer a:hover {
+  text-decoration: underline;
+}
+@media (max-width: 800px) {
+  .portfolio-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .studio-bio {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .studio-bio-copy h1 {
+    max-width: 20ch;
+    font-size: clamp(2.8rem, 6vw, 4.2rem);
+  }
+  .studio-bio > img {
+    height: clamp(22rem, 65vw, 34rem);
+  }
+  .studio-philosophy-inner {
+    grid-template-columns: 1fr;
+    gap: 2.75rem;
+  }
+  .studio-philosophy-visual img {
+    aspect-ratio: 5 / 4;
+  }
+  .studio-philosophy h2 {
+    max-width: 18ch;
+  }
+}
+@media (max-width: 580px) {
+  .studio-bio {
+    padding-top: 3rem;
+  }
+  .studio-bio-copy h1 {
+    font-size: clamp(2.5rem, 10vw, 3.5rem);
+  }
+  .studio-bio > img {
+    height: 26rem;
+  }
+  .studio-philosophy-visual img {
+    aspect-ratio: 4 / 5;
+  }
+  .portfolio-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+  .portfolio-grid {
+    grid-template-columns: 1fr;
+  }
+  .portfolio-card img {
+    aspect-ratio: 5 / 4;
+  }
 }

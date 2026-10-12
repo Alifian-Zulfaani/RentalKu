@@ -1,19 +1,20 @@
 <template>
   <div class="admin-shell">
-    <div class="login-theme-control"><ThemeToggle /></div>
     <div class="admin-login-layout">
+      <div class="login-theme-control"><ThemeToggle /></div>
       <section class="login-intro">
-        <a href="/" class="login-brand"
-          ><span class="mark">S.</span> {{ tenantName }}</a
-        >
+        <div class="login-intro-top">
+          <a href="/" class="login-brand"
+            ><span class="mark">S.</span> {{ tenantName }}</a
+          >
+        </div>
         <div class="login-intro-copy">
           <p class="section-index">
             {{ tenantName.toUpperCase() }} / PANEL PENGELOLA
           </p>
           <h1>Setiap sesi dimulai dari jadwal yang rapi.</h1>
           <p>
-            Reservasi, fotografer, layanan, dan ketersediaan tersusun di satu
-            ruang kerja.
+            Reservasi, jadwal studio, dan karya tersusun di satu ruang kerja.
           </p>
         </div>
         <a href="/" class="login-back"
@@ -83,20 +84,22 @@ import {
 import { useRouter } from "vue-router";
 import { useRoute } from "vue-router";
 import { useAdminStore } from "../../stores/admin";
+import { setAdminFlash } from "../../utils/adminFlash";
 import ThemeToggle from "../../components/shared/ThemeToggle.vue";
 import "../../admin.css";
 const router = useRouter();
 const route = useRoute();
-const { tenantName, error, credentials, showPassword, busy, login, token } =
+const { tenantName, error, credentials, showPassword, busy, login } =
   useAdminStore();
 async function submitLogin() {
-  await login();
-  if (!token.value) return;
+  const loggedIn = await login();
+  if (!loggedIn) return;
   const redirect =
     typeof route.query.redirect === "string" &&
     route.query.redirect.startsWith("/admin/")
       ? route.query.redirect
       : "/admin/dashboard";
+  setAdminFlash("Berhasil masuk. Selamat datang kembali!");
   router.replace(redirect);
 }
 </script>

@@ -1,53 +1,44 @@
 <template>
   <Teleport to="body">
     <Transition name="modal-fade">
-      <div
+      <AdminDialog
         v-if="open"
-        class="booking-dialog-backdrop"
-        @click.self="$emit('close')"
+        role="alertdialog"
+        dialog-class="confirmation-dialog"
+        :title-id="titleId"
+        :description-id="`${titleId}-message`"
+        close-label="Tutup konfirmasi"
+        @close="$emit('close')"
       >
-        <section
-          class="booking-dialog confirmation-dialog"
-          role="alertdialog"
-          aria-modal="true"
-          :aria-labelledby="titleId"
-        >
-          <button
-            type="button"
-            class="dialog-close"
-            aria-label="Tutup konfirmasi"
-            @click="$emit('close')"
-          >
-            <X :size="19" />
-          </button>
+        <template #header>
           <p class="section-index">KONFIRMASI</p>
           <h2 :id="titleId">{{ title }}</h2>
-          <p>{{ message }}</p>
-          <div class="cancellation-actions">
-            <button
-              type="button"
-              class="button secondary"
-              @click="$emit('close')"
-            >
-              Kembali
-            </button>
-            <button
-              type="button"
-              class="button"
-              :class="confirmTone === 'danger' ? 'danger' : 'primary'"
-              @click="$emit('confirm')"
-            >
-              {{ confirmLabel }}
-            </button>
-          </div>
-        </section>
-      </div>
+        </template>
+        <p :id="`${titleId}-message`">{{ message }}</p>
+        <template #footer>
+          <button
+            type="button"
+            class="button secondary"
+            @click="$emit('close')"
+          >
+            Kembali
+          </button>
+          <button
+            type="button"
+            class="button"
+            :class="confirmTone === 'danger' ? 'danger' : 'primary'"
+            @click="$emit('confirm')"
+          >
+            {{ confirmLabel }}
+          </button>
+        </template>
+      </AdminDialog>
     </Transition>
   </Teleport>
 </template>
 
 <script setup>
-import { X } from "lucide-vue-next";
+import AdminDialog from "./AdminDialog.vue";
 
 defineProps({
   open: { type: Boolean, default: false },

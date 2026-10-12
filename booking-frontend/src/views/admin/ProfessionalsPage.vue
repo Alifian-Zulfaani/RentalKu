@@ -43,7 +43,7 @@
         </thead>
         <tbody>
           <tr v-for="person in pagedProfessionals" :key="person.id">
-            <td data-align="left">
+            <td data-align="left" data-label="Fotografer">
               <span class="photographer-cell">
                 <span class="photographer-thumb">
                   <img
@@ -61,12 +61,16 @@
                 >
               </span>
             </td>
-            <td data-align="left">{{ person.title }}</td>
-            <td data-align="left">
+            <td data-align="left" data-label="Spesialisasi">
+              {{ person.title }}
+            </td>
+            <td data-align="left" data-label="Subdomain">
               <code>{{ person.slug }}</code>
             </td>
-            <td data-align="center">{{ person.schedule.length }} hari</td>
-            <td data-align="center">
+            <td data-align="center" data-label="Jadwal aktif">
+              {{ person.schedule.length }} hari
+            </td>
+            <td data-align="center" data-label="Status">
               <span
                 class="status-badge"
                 :class="
@@ -78,7 +82,7 @@
                 {{ person.active ? "Aktif" : "Nonaktif" }}
               </span>
             </td>
-            <td data-align="center">
+            <td data-align="center" data-label="Aksi">
               <div class="admin-action-group">
                 <AdminActionButton
                   label="Detail"

@@ -1,36 +1,28 @@
 <template>
   <section class="admin-panel">
-    <p class="section-index">03 — JAM KERJA</p>
-    <h2>Jadwal mingguan fotografer</h2>
-    <div
-      v-for="person in professionals"
-      :key="person.id"
-      class="schedule-person"
-    >
-      <h3>{{ person.name }}</h3>
+    <p class="section-index">JAM OPERASIONAL</p>
+    <h2>Jadwal mingguan studio</h2>
+    <div class="schedule-person">
+      <p class="panel-description">
+        Atur hari dan jam ketika studio menerima reservasi.
+      </p>
       <div class="schedule-list">
         <label v-for="(day, index) in weekdays" :key="day"
           ><input
             type="checkbox"
-            :checked="Boolean(scheduleDrafts[person.id]?.[index])"
-            @change="toggleDay(person.id, index, $event.target.checked)" />{{
-            day
-          }}<template v-if="scheduleDrafts[person.id]?.[index]"
+            :checked="Boolean(studioSchedule[index])"
+            @change="toggleStudioDay(index, $event.target.checked)" />{{ day
+          }}<template v-if="studioSchedule[index]"
             ><input
               type="time"
-              v-model="scheduleDrafts[person.id][index].start_time" /><span
-              >–</span
+              v-model="studioSchedule[index].start_time" /><span>–</span
             ><input
               type="time"
-              v-model="scheduleDrafts[person.id][index].end_time" /></template
+              v-model="studioSchedule[index].end_time" /></template
         ></label>
       </div>
-      <button
-        type="button"
-        class="button primary"
-        @click="saveSchedule(person.id)"
-      >
-        Simpan jam kerja
+      <button type="button" class="button primary" @click="saveStudioSchedule">
+        Simpan jam operasional
       </button>
     </div>
   </section>
@@ -38,6 +30,6 @@
 
 <script setup>
 import { useAdminContext } from "../../stores/context";
-const { professionals, scheduleDrafts, weekdays, toggleDay, saveSchedule } =
+const { studioSchedule, weekdays, toggleStudioDay, saveStudioSchedule } =
   useAdminContext();
 </script>

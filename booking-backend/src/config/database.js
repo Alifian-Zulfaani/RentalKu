@@ -13,6 +13,13 @@ const hadOfferings = Boolean(
     )
     .get(),
 );
+const hadStudioHours = Boolean(
+  db
+    .prepare(
+      "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'studio_working_hours'",
+    )
+    .get(),
+);
 db.exec(`
   CREATE TABLE IF NOT EXISTS tenants (
     id INTEGER PRIMARY KEY,
@@ -57,6 +64,30 @@ db.exec(`
     end_time TEXT NOT NULL,
     UNIQUE(professional_id, weekday)
   );
+  CREATE TABLE IF NOT EXISTS studio_working_hours (
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    weekday INTEGER NOT NULL CHECK(weekday BETWEEN 0 AND 6),
+    start_time TEXT NOT NULL,
+    end_time TEXT NOT NULL,
+    PRIMARY KEY (tenant_id, weekday)
+  );
+  CREATE TABLE IF NOT EXISTS studio_blocks (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    date TEXT NOT NULL,
+    start_time TEXT NOT NULL,
+    end_time TEXT NOT NULL,
+    reason TEXT NOT NULL DEFAULT ''
+  );
+  CREATE TABLE IF NOT EXISTS portfolio_items (
+    id INTEGER PRIMARY KEY,
+    tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    caption TEXT NOT NULL DEFAULT '',
+    image_url TEXT NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    active INTEGER NOT NULL DEFAULT 1
+  );
   CREATE TABLE IF NOT EXISTS professional_services (
     professional_id INTEGER NOT NULL REFERENCES professionals(id) ON DELETE CASCADE,
     service_id INTEGER NOT NULL REFERENCES services(id) ON DELETE CASCADE,
@@ -91,12 +122,33 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_bookings_slot ON bookings(professional_id, date, start_time, end_time, status);
   CREATE INDEX IF NOT EXISTS idx_bookings_tenant_date ON bookings(tenant_id, date);
   CREATE INDEX IF NOT EXISTS idx_blocks_slot ON blocks(professional_id, date);
+  CREATE INDEX IF NOT EXISTS idx_studio_blocks_slot ON studio_blocks(tenant_id, date);
+  CREATE INDEX IF NOT EXISTS idx_portfolio_tenant_order ON portfolio_items(tenant_id, sort_order, id);
 `);
+if (!hadStudioHours) {
+  db.exec(`INSERT INTO studio_working_hours (tenant_id, weekday, start_time, end_time)
+    SELECT p.tenant_id, h.weekday, h.start_time, h.end_time
+    FROM working_hours h JOIN professionals p ON p.id = h.professional_id
+    WHERE p.id = (SELECT MIN(id) FROM professionals WHERE tenant_id = p.tenant_id)`);
+}
+const bookingColumns = db.prepare("PRAGMA table_info(bookings)").all();
+if (!bookingColumns.some((column) => column.name === "booking_scope")) {
+  db.exec(
+    "ALTER TABLE bookings ADD COLUMN booking_scope TEXT NOT NULL DEFAULT 'professional'",
+  );
+}
 const tenantColumns = db.prepare("PRAGMA table_info(tenants)").all();
 if (!tenantColumns.some((column) => column.name === "hero_image_url")) {
   db.exec(
     "ALTER TABLE tenants ADD COLUMN hero_image_url TEXT NOT NULL DEFAULT ''",
   );
+}
+for (const column of ["philosophy_title", "philosophy_body"]) {
+  if (!tenantColumns.some((item) => item.name === column)) {
+    db.exec(
+      `ALTER TABLE tenants ADD COLUMN ${column} TEXT NOT NULL DEFAULT ''`,
+    );
+  }
 }
 const professionalColumns = db
   .prepare("PRAGMA table_info(professionals)")

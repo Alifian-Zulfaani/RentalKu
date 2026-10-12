@@ -20,9 +20,9 @@ async function request(path, options = {}) {
   });
   return { status: response.status, body: await response.json() };
 }
-function nextWorkingDay() {
+function nextWorkingDay(daysAhead = 7) {
   const date = new Date();
-  date.setUTCDate(date.getUTCDate() + 7);
+  date.setUTCDate(date.getUTCDate() + daysAhead);
   while (date.getUTCDay() === 0) date.setUTCDate(date.getUTCDate() + 1);
   return date.toISOString().slice(0, 10);
 }
@@ -32,6 +32,7 @@ test("halaman studio dan fotografer memakai tenant yang sama", async () => {
   const person = await request("/public/site?tenant=studio&pro=naya");
   assert.equal(studio.status, 200);
   assert.equal(studio.body.profile, null);
+  assert.match(studio.body.tenant.philosophy_title, /Cahaya/);
   assert.equal(person.body.profile.slug, "naya");
   assert.equal(person.body.profile.photo_url, "/images/naya-portrait.png");
   assert.equal(
@@ -39,6 +40,111 @@ test("halaman studio dan fotografer memakai tenant yang sama", async () => {
     "Potret yang terasa seperti pulang.",
   );
   assert.equal(person.body.tenant.id, studio.body.tenant.id);
+});
+
+test("MVP studio memakai kalender bersama dan karya yang aktif", async () => {
+  const site = await request("/public/site?tenant=studio");
+  assert.equal(site.status, 200);
+  assert.ok(site.body.schedule.length > 0);
+  assert.equal(site.body.portfolio.length, 6);
+  const login = await request("/admin/login", {
+    method: "POST",
+    body: JSON.stringify({
+      email: "admin@studiosenja.example",
+      password: "admin123",
+    }),
+  });
+  const headers = { Authorization: `Bearer ${login.body.token}` };
+  const schedule = await request("/admin/studio/schedule", { headers });
+  assert.equal(schedule.status, 200);
+  assert.deepEqual(schedule.body.data, site.body.schedule);
+  const portfolio = await request("/admin/portfolio", { headers });
+  assert.equal(portfolio.body.data.length, 6);
+  const hidden = await request(
+    `/admin/portfolio/${portfolio.body.data[0].id}`,
+    { method: "PATCH", headers, body: JSON.stringify({ active: false }) },
+  );
+  assert.equal(hidden.status, 200);
+  assert.equal(
+    (await request("/public/site?tenant=studio")).body.portfolio.length,
+    5,
+  );
+  assert.equal(
+    (
+      await request(`/admin/portfolio/${portfolio.body.data[0].id}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ active: true }),
+      })
+    ).status,
+    200,
+  );
+
+  const date = nextWorkingDay(14);
+  const calendar = await request(
+    `/public/availability?tenant=studio&service=1&month=${date.slice(0, 7)}`,
+  );
+  const start_time = calendar.body.days.find((day) => day.date === date)
+    .slots[0];
+  assert.ok(start_time);
+  const payload = {
+    tenant: "studio",
+    service_id: 1,
+    date,
+    start_time,
+    customer_name: "Mira Rahma",
+    customer_email: "mira@example.com",
+    customer_whatsapp: "081234567891",
+  };
+  const first = await request("/public/bookings", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  assert.equal(first.status, 201);
+  assert.equal(first.body.data.booking_scope, "studio");
+  assert.equal(
+    (
+      await request("/public/bookings", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      })
+    ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await request(`/admin/bookings/${first.body.data.id}/status`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ status: "cancelled" }),
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await request("/admin/studio/blocks", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          date,
+          start_time,
+          end_time: first.body.data.end_time,
+          reason: "Libur studio",
+        }),
+      })
+    ).status,
+    201,
+  );
+  assert.equal(
+    (
+      await request("/public/bookings", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      })
+    ).status,
+    409,
+  );
 });
 
 test("slot terisi tidak dapat dibooking dua kali dan kembali tersedia setelah dibatalkan", async () => {
@@ -269,5 +375,72 @@ test("harga per fotografer dan akses admin dibatasi sesuai role", async () => {
       })
     ).status,
     403,
+  );
+});
+
+test("ubah kata sandi membutuhkan konfirmasi yang sama", async () => {
+  const login = await request("/admin/login", {
+    method: "POST",
+    body: JSON.stringify({
+      email: "admin@studiosenja.example",
+      password: "admin123",
+    }),
+  });
+  const headers = { Authorization: `Bearer ${login.body.token}` };
+  const payload = {
+    current_password: "admin123",
+    new_password: "kata-sandi-baru-aman",
+  };
+  const missingConfirmation = await request("/admin/password", {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(payload),
+  });
+  assert.equal(missingConfirmation.status, 422);
+  assert.equal(
+    missingConfirmation.body.errors[0].field,
+    "new_password_confirmation",
+  );
+  const mismatch = await request("/admin/password", {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({
+      ...payload,
+      new_password_confirmation: "tidak-sama",
+    }),
+  });
+  assert.equal(mismatch.status, 422);
+  const updated = await request("/admin/password", {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({
+      ...payload,
+      new_password_confirmation: payload.new_password,
+    }),
+  });
+  assert.equal(updated.status, 200);
+  assert.equal(
+    (
+      await request("/admin/login", {
+        method: "POST",
+        body: JSON.stringify({
+          email: "admin@studiosenja.example",
+          password: "admin123",
+        }),
+      })
+    ).status,
+    401,
+  );
+  assert.equal(
+    (
+      await request("/admin/login", {
+        method: "POST",
+        body: JSON.stringify({
+          email: "admin@studiosenja.example",
+          password: payload.new_password,
+        }),
+      })
+    ).status,
+    200,
   );
 });
